@@ -37,6 +37,7 @@ let currentMin      = 60;
 let currentSec      = 0;
 let timerHasStopped = true;
 let onSplash        = true;
+let gameLocked      = false; // true after Stop — must reset to clear
 let volume          = 0.4;
 let clueCount       = 0;
 let musicPauseMs    = 0;
@@ -84,13 +85,13 @@ function updateTimerDisplay() {
 
 function broadcastState() {
   channel.postMessage({ type: 'state', currentMin, currentSec, clockForward,
-    timerHasStopped, onSplash, clueCount, volume, startMinutes });
+    timerHasStopped, onSplash, gameLocked, clueCount, volume, startMinutes });
 }
 
 // ── Actions ───────────────────────────────────────────────────────────────────
 function resetTimer() {
   currentMin = startMinutes; currentSec = 0;
-  clockForward = false; timerHasStopped = true;
+  clockForward = false; timerHasStopped = true; gameLocked = false;
   updateTimerDisplay(); statusEl.textContent = 'PAUSED'; broadcastState();
 }
 
@@ -114,7 +115,7 @@ function resumeTimer() {
 
 function markEscaped() {
   stopTimerMusic(); stopFinaleMusic();
-  timerHasStopped = true; onSplash = true;
+  timerHasStopped = true; onSplash = true; gameLocked = true;
   logoEl.classList.remove('visible');
   splashTextEl.classList.remove('dim');
   splashTextEl.style.fontSize = '12vw';
@@ -126,8 +127,19 @@ function markEscaped() {
   playFinaleMusic(); statusEl.textContent = 'ESCAPED'; broadcastState();
 }
 
+// ── Start/Stop key logic ──────────────────────────────────────────────────────
+// WAITING → START (running), RUNNING → STOP (locked), LOCKED → nothing
+function handleStartStop() {
+  if (gameLocked) return;                          // locked — ignore
+  if (onSplash && timerHasStopped) { startGame(); return; } // start
+  if (!timerHasStopped) { markEscaped(); return; } // stop
+  // if paused but not locked, also allow stop
+  if (timerHasStopped && !onSplash) { markEscaped(); }
+}
+
 function showWaitingSplash() {
   stopTimerMusic(); stopFinaleMusic(); musicPauseMs = 0; onSplash = true;
+  gameLocked = false; // reset clears the lock
   logoEl.classList.remove('visible'); negativeEl.style.opacity = '0';
   clueBoxEl.textContent = '...'; clueCount = 0; clueCountEl.textContent = 'Clues: 0';
   splashTextEl.classList.add('dim'); splashTextEl.style.fontSize = '';
@@ -171,9 +183,9 @@ channel.addEventListener('message', (e) => {
   const c = e.data;
   if (!c || c.type === 'state') return;
   switch (c.type) {
-    case 'start':          startGame(); break;
+    case 'start':          if (!gameLocked) startGame(); break;
     case 'pause':          pauseTimer(); break;
-    case 'resume':         resumeTimer(); break;
+    case 'resume':         if (!gameLocked) resumeTimer(); break;
     case 'escaped':        markEscaped(); break;
     case 'reset':          showWaitingSplash(); break;
     case 'add-min':        adjustTime(1, 0); break;
@@ -190,32 +202,32 @@ channel.addEventListener('message', (e) => {
 });
 
 // ── Keyboard ──────────────────────────────────────────────────────────────────
-function handleActivate() {
-  if (onSplash && timerHasStopped) { startGame(); return; }
-  if (!timerHasStopped) { markEscaped(); return; }
-  resumeTimer();
-}
-
 document.addEventListener('keydown', (e) => {
   const k = e.keyCode;
+  const keyStr = eventToKeyString(e);
 
-  // Fixed timer controls
-  if (k === 32)  { handleActivate(); return; }
+  // Start/Stop key (configured)
+  if (cfg.startStopKey && keyStr === cfg.startStopKey) {
+    e.preventDefault(); handleStartStop(); return;
+  }
+
+  // Space = same as Start/Stop
+  if (k === 32)  { handleStartStop(); return; }
+  // Pause/Break = silent pause/resume only (no lock)
   if (k === 19)  { timerHasStopped ? resumeTimer() : pauseTimer(); return; }
+  // Reset keys
   if (k === 145 || k === 192) { showWaitingSplash(); return; }
+  // Volume
   if (k === 107) { setVolume(volume + 0.01); broadcastState(); return; }
   if (k === 109) { setVolume(volume - 0.01); broadcastState(); return; }
+  // Hide clue
   if (k === 111 || k === 96) { hideClue(); return; }
 
-  // Check configured hint keys
-  const keyStr = eventToKeyString(e);
-  if (keyMap[keyStr]) {
-    e.preventDefault();
-    showHint(keyMap[keyStr]);
-  }
+  // Configured hint keys
+  if (keyMap[keyStr]) { e.preventDefault(); showHint(keyMap[keyStr]); return; }
 });
 
-document.addEventListener('click', handleActivate);
+document.addEventListener('click', handleStartStop);
 
 // ── Timer loop ────────────────────────────────────────────────────────────────
 updateTimerDisplay();

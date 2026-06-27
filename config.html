@@ -139,6 +139,12 @@
     <input type="range" id="volume" min="0" max="100" value="40" />
     <span class="vol-val" id="vol-display">40%</span>
   </div>
+  <div class="field-row" style="margin-top:10px;padding-top:10px;border-top:1px solid #0f3460;">
+    <label style="line-height:1.3;">Start / Stop key
+      <div style="color:#555;font-size:11px;margin-top:2px;">Press 1× to start, press again to stop.<br>Locked until room is reset.</div>
+    </label>
+    <div id="start-stop-key-capture" class="key-capture" tabindex="0">click to assign</div>
+  </div>
 </div>
 
 <!-- Logo -->
@@ -166,9 +172,10 @@
 <div class="card">
   <h2>Timer Keyboard Reference</h2>
   <table class="kbd-table">
-    <tr><td>Click / Space</td><td>Start → Mark Escaped → Resume</td></tr>
-    <tr><td>Pause/Break</td><td>Pause / Resume (no Escaped screen)</td></tr>
-    <tr><td>Scroll Lock or `</td><td>Return to waiting splash</td></tr>
+    <tr><td>Start/Stop key</td><td>1st press = Start timer. 2nd press = Stop permanently. Locked until reset.</td></tr>
+    <tr><td>Click / Space</td><td>Same as Start/Stop key (click on game screen)</td></tr>
+    <tr><td>Pause/Break</td><td>Pause / Resume timer silently (no Escaped screen)</td></tr>
+    <tr><td>Scroll Lock or `</td><td>Return to waiting splash &amp; reset room</td></tr>
     <tr><td>Numpad + / −</td><td>Volume up / down</td></tr>
     <tr><td>Numpad 0 or /</td><td>Hide hint on game screen</td></tr>
     <tr><td>F11</td><td>Toggle fullscreen on game screen</td></tr>
@@ -364,11 +371,48 @@ logoPathEl.addEventListener('input', () => {
   else   { logoPreview.style.display = 'none'; }
 });
 
-// Populate groups
+// ── Start/Stop key capture ────────────────────────────────────────────────────
+const startStopCapture = document.getElementById('start-stop-key-capture');
+// Re-use makeKeyCapture logic inline (element already in DOM)
+if (cfg.startStopKey) {
+  startStopCapture.textContent = cfg.startStopKey;
+  startStopCapture.dataset.key = cfg.startStopKey;
+  startStopCapture.classList.add('has-key');
+}
+startStopCapture.addEventListener('click', () => {
+  startStopCapture.classList.add('capturing');
+  startStopCapture.classList.remove('has-key');
+  startStopCapture.textContent = '… press key …';
+  startStopCapture.dataset.key = '';
+  startStopCapture.focus();
+});
+startStopCapture.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  startStopCapture.dataset.key = '';
+  startStopCapture.textContent = 'click to assign';
+  startStopCapture.className = 'key-capture';
+});
+startStopCapture.addEventListener('keydown', (e) => {
+  if (!startStopCapture.classList.contains('capturing')) return;
+  e.preventDefault(); e.stopPropagation();
+  if (['Control','Alt','Shift','Meta'].includes(e.key)) return;
+  const keyStr = formatKey(e);
+  startStopCapture.dataset.key = keyStr;
+  startStopCapture.textContent = keyStr;
+  startStopCapture.className = 'key-capture has-key';
+});
+startStopCapture.addEventListener('blur', () => {
+  if (startStopCapture.classList.contains('capturing')) {
+    startStopCapture.classList.remove('capturing');
+    startStopCapture.textContent = startStopCapture.dataset.key || 'click to assign';
+    if (startStopCapture.dataset.key) startStopCapture.classList.add('has-key');
+  }
+});
+
+// ── Populate groups ───────────────────────────────────────────────────────────
 const container = document.getElementById('groups-container');
 const groups = cfg.hintGroups || [];
 if (groups.length === 0) {
-  // Default starter group
   container.appendChild(makeGroupCard({ name: 'Hints', hints: [] }));
 } else {
   groups.forEach(g => container.appendChild(makeGroupCard(g)));
@@ -384,6 +428,7 @@ document.getElementById('save-btn').addEventListener('click', () => {
     timerMinutes: parseInt(document.getElementById('timer-minutes').value) || 60,
     volume:       parseInt(volSlider.value) / 100,
     logoPath:     logoPathEl.value.trim(),
+    startStopKey: startStopCapture.dataset.key || '',
     hintGroups:   readGroupsFromDOM(),
   };
   saveConfig(saved);
@@ -397,6 +442,9 @@ document.getElementById('reset-btn').addEventListener('click', () => {
   document.getElementById('timer-minutes').value = 60;
   volSlider.value = 40; volDisplay.textContent = '40%';
   logoPathEl.value = ''; logoPreview.style.display = 'none';
+  startStopCapture.dataset.key = '';
+  startStopCapture.textContent = 'click to assign';
+  startStopCapture.className = 'key-capture';
   container.innerHTML = '';
   container.appendChild(makeGroupCard({ name: 'Hints', hints: [] }));
 });

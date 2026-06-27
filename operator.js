@@ -41,16 +41,23 @@ channel.addEventListener('message', (e) => {
 
   bigTimer.textContent = (data.clockForward ? '− ' : '') + pad(data.currentMin) + ':' + pad(data.currentSec);
   bigTimer.className = '';
-  if (data.clockForward)           bigTimer.classList.add('negative');
+  if (data.gameLocked)             bigTimer.classList.add('escaped');
+  else if (data.clockForward)      bigTimer.classList.add('negative');
   else if (!data.timerHasStopped)  bigTimer.classList.add('running');
   else                             bigTimer.classList.add('paused');
 
   let st = 'WAITING';
-  if (!data.onSplash && !data.timerHasStopped) st = 'RUNNING';
-  else if (!data.onSplash && data.timerHasStopped) st = 'PAUSED';
+  if (data.gameLocked)                                    st = 'LOCKED — RESET TO PLAY AGAIN';
+  else if (!data.onSplash && !data.timerHasStopped)       st = 'RUNNING';
+  else if (!data.onSplash && data.timerHasStopped)        st = 'PAUSED';
   statusBadge.textContent = st;
 
+  // Disable Start/Resume when locked
+  const locked = !!data.gameLocked;
+  document.getElementById('btn-start').disabled  = locked;
+  pauseBtn.disabled = locked;
   pauseBtn.textContent = data.timerHasStopped ? '▶ Resume' : '⏸ Pause';
+
   volDisplay.textContent = Math.round((data.volume || 0) * 100) + '%';
   clueCountEl.textContent = data.clueCount || 0;
 });
