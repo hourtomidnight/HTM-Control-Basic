@@ -183,6 +183,20 @@
     </div>
   </section>
 
+  <!-- Display assignment -->
+  <section>
+    <h2>Display Assignment</h2>
+    <p style="color:#888;font-size:13px;margin-bottom:12px;">0 = primary monitor. If you only have one display both windows open on it.</p>
+    <div class="field-row">
+      <label>Game screen display</label>
+      <input type="number" id="game-display" min="0" max="9" value="1" style="width:70px" />
+    </div>
+    <div class="field-row">
+      <label>Operator screen display</label>
+      <input type="number" id="operator-display" min="0" max="9" value="0" style="width:70px" />
+    </div>
+  </section>
+
   <!-- Logo -->
   <section>
     <h2>Logo Image</h2>
@@ -282,6 +296,8 @@
         logoPreview.src = cfg.logoPath;
         logoPreview.style.display = 'block';
       }
+      document.getElementById('game-display').value     = cfg.gameDisplay     ?? 1;
+      document.getElementById('operator-display').value = cfg.operatorDisplay ?? 0;
       (cfg.clues || []).forEach((text, i) => {
         if (clueInputs[i]) clueInputs[i].value = text || '';
       });
@@ -290,10 +306,12 @@
     // Save
     document.getElementById('save-btn').addEventListener('click', async () => {
       const cfg = {
-        timerMinutes: parseInt(document.getElementById('timer-minutes').value) || 60,
-        volume: parseInt(volSlider.value) / 100,
-        logoPath: logoPathEl.value.trim(),
-        clues: clueInputs.map(inp => inp.value),
+        timerMinutes:    parseInt(document.getElementById('timer-minutes').value) || 60,
+        volume:          parseInt(volSlider.value) / 100,
+        logoPath:        logoPathEl.value.trim(),
+        gameDisplay:     parseInt(document.getElementById('game-display').value)     || 1,
+        operatorDisplay: parseInt(document.getElementById('operator-display').value) || 0,
+        clues:           clueInputs.map(inp => inp.value),
       };
       await ipcRenderer.invoke('save-config', cfg);
       document.getElementById('status-msg').textContent = 'Saved!';
@@ -307,6 +325,8 @@
       volDisplay.textContent = '40%';
       logoPathEl.value = '';
       logoPreview.style.display = 'none';
+      document.getElementById('game-display').value = 1;
+      document.getElementById('operator-display').value = 0;
       clueInputs.forEach(inp => inp.value = '');
     });
   </script>

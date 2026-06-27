@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>HTM — Operator</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0d0d1a;
+      color: #e0e0e0;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      grid-template-columns: 280px 1fr;
+      grid-template-areas:
+        "timer  timer"
+        "ctrl   hints";
+      gap: 0;
+      overflow: hidden;
+    }
+
+    /* ── Timer panel (top) ── */
+    #timer-panel {
+      grid-area: timer;
+      background: #12122a;
+      border-bottom: 2px solid #1e1e4a;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 14px 24px;
+    }
+
+    #big-timer {
+      font-size: 86px;
+      font-weight: bold;
+      font-family: Arial, sans-serif;
+      color: #fff;
+      letter-spacing: -3px;
+      min-width: 280px;
+      line-height: 1;
+    }
+
+    #big-timer.negative { color: #ff4444; }
+    #big-timer.running  { color: #7fff7f; }
+    #big-timer.paused   { color: #fff; }
+    #big-timer.escaped  { color: #ffd700; }
+
+    #status-badge {
+      font-size: 13px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    /* ── Timer adjust buttons ── */
+    .time-adj {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .time-adj label {
+      font-size: 11px;
+      color: #666;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+    .adj-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    /* ── Main control buttons ── */
+    #main-btns {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-left: auto;
+    }
+
+    button {
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 13px;
+      transition: filter 0.15s, transform 0.1s;
+      user-select: none;
+    }
+    button:hover  { filter: brightness(1.15); }
+    button:active { transform: scale(0.96); }
+
+    /* Sizes */
+    .btn-adj   { width: 54px; height: 40px; font-size: 20px; background: #1e2a4a; color: #a0c4ff; }
+    .btn-lg    { padding: 12px 28px; font-size: 15px; min-width: 130px; }
+    .btn-start { background: #2e7d32; color: #fff; }
+    .btn-pause { background: #1565c0; color: #fff; }
+    .btn-esc   { background: #7b1fa2; color: #fff; }
+    .btn-reset { background: #424242; color: #ccc; }
+    .btn-cfg   { background: #37474f; color: #90caf9; font-size: 12px; padding: 8px 16px; }
+
+    /* ── Left column: volume + clue count ── */
+    #ctrl-panel {
+      grid-area: ctrl;
+      background: #0f0f22;
+      border-right: 2px solid #1e1e4a;
+      padding: 16px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+    }
+
+    .ctrl-section h3 {
+      font-size: 11px;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #1e1e4a;
+      padding-bottom: 6px;
+    }
+
+    .vol-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-vol { width: 40px; height: 36px; font-size: 18px; background: #1a2a3a; color: #a0c4ff; }
+    #vol-display {
+      font-size: 18px;
+      font-weight: bold;
+      color: #a0c4ff;
+      min-width: 46px;
+      text-align: center;
+    }
+
+    #clue-count-display {
+      font-size: 32px;
+      font-weight: bold;
+      color: #ffd700;
+      text-align: center;
+      margin-top: 4px;
+    }
+    #clue-count-label { font-size: 11px; color: #555; text-align: center; letter-spacing: 1px; }
+
+    .btn-hide-clue {
+      width: 100%;
+      padding: 9px;
+      background: #2a1a1a;
+      color: #ff8888;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    /* ── Right column: hint list ── */
+    #hints-panel {
+      grid-area: hints;
+      padding: 16px 14px;
+      overflow-y: auto;
+      background: #0d0d1a;
+    }
+
+    #hints-panel h3 {
+      font-size: 11px;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #1e1e4a;
+      padding-bottom: 6px;
+    }
+
+    #hints-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .hint-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #131330;
+      border: 1px solid #1e1e4a;
+      border-radius: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.15s, border-color 0.15s;
+      width: 100%;
+      color: #e0e0e0;
+    }
+    .hint-btn:hover { background: #1a1a50; border-color: #3a3a8a; }
+    .hint-btn:active { background: #2a2a70; transform: scale(0.99); }
+    .hint-btn.empty { opacity: 0.35; cursor: default; }
+    .hint-btn.empty:hover { background: #131330; border-color: #1e1e4a; }
+
+    .hint-key {
+      background: #0f3460;
+      color: #a0c4ff;
+      font-family: monospace;
+      font-size: 11px;
+      padding: 3px 7px;
+      border-radius: 4px;
+      min-width: 64px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .hint-text {
+      font-size: 13px;
+      line-height: 1.3;
+      color: #ccc;
+      flex: 1;
+    }
+    .hint-text.placeholder { color: #444; font-style: italic; }
+  </style>
+</head>
+<body>
+
+<!-- ── Timer panel ── -->
+<div id="timer-panel">
+  <div>
+    <div id="big-timer">60:00</div>
+    <div id="status-badge">WAITING</div>
+  </div>
+
+  <!-- Minute adjust -->
+  <div class="time-adj">
+    <label>MINUTE</label>
+    <div class="adj-row">
+      <button class="btn-adj" id="add-min">+</button>
+      <button class="btn-adj" id="sub-min">−</button>
+    </div>
+  </div>
+
+  <!-- Second adjust -->
+  <div class="time-adj">
+    <label>SECOND</label>
+    <div class="adj-row">
+      <button class="btn-adj" id="add-sec">+</button>
+      <button class="btn-adj" id="sub-sec">−</button>
+    </div>
+  </div>
+
+  <!-- Main buttons -->
+  <div id="main-btns">
+    <div style="display:flex;gap:8px;">
+      <button class="btn-lg btn-start" id="btn-start">▶ Start</button>
+      <button class="btn-lg btn-pause" id="btn-pause">⏸ Pause</button>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn-lg btn-esc"   id="btn-escaped">🏁 Escaped</button>
+      <button class="btn-lg btn-reset" id="btn-reset">↺ Reset</button>
+    </div>
+  </div>
+
+  <button class="btn-cfg" id="btn-cfg" style="margin-left:auto;align-self:flex-start;">⚙ Config</button>
+</div>
+
+<!-- ── Left: volume + clue count ── -->
+<div id="ctrl-panel">
+  <div class="ctrl-section">
+    <h3>Volume</h3>
+    <div class="vol-row">
+      <button class="btn-vol" id="vol-down">−</button>
+      <div id="vol-display">40%</div>
+      <button class="btn-vol" id="vol-up">+</button>
+    </div>
+  </div>
+
+  <div class="ctrl-section">
+    <h3>Clues Given</h3>
+    <div id="clue-count-display">0</div>
+    <div id="clue-count-label">CLUES USED</div>
+    <button class="btn-hide-clue hint-btn" id="btn-hide-clue">✕ Hide Clue on Game Screen</button>
+  </div>
+</div>
+
+<!-- ── Right: hint list ── -->
+<div id="hints-panel">
+  <h3>Hints — click to display on game screen</h3>
+  <div id="hints-list"></div>
+</div>
+
+<script src="operator.js"></script>
+</body>
+</html>
