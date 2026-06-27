@@ -10,311 +10,396 @@
       background: #1a1a2e;
       color: #e0e0e0;
       font-family: Arial, sans-serif;
-      font-size: 15px;
-      padding: 24px;
+      font-size: 14px;
+      padding: 24px 28px 40px;
       min-height: 100vh;
     }
 
-    h1 {
-      font-size: 26px;
-      color: #fff;
-      margin-bottom: 6px;
-      letter-spacing: 1px;
-    }
+    h1 { font-size: 24px; color: #fff; margin-bottom: 4px; }
+    .subtitle { color: #666; font-size: 12px; margin-bottom: 24px; }
 
-    .subtitle {
-      color: #888;
-      margin-bottom: 28px;
-      font-size: 13px;
-    }
-
-    section {
+    /* ── Sections ── */
+    .card {
       background: #16213e;
       border-radius: 10px;
-      padding: 20px 24px;
-      margin-bottom: 20px;
+      padding: 18px 22px;
+      margin-bottom: 18px;
     }
-
-    section h2 {
-      font-size: 15px;
-      color: #a0c4ff;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      margin-bottom: 16px;
-      border-bottom: 1px solid #0f3460;
-      padding-bottom: 8px;
+    .card h2 {
+      font-size: 12px; color: #a0c4ff; text-transform: uppercase;
+      letter-spacing: 2px; margin-bottom: 14px;
+      border-bottom: 1px solid #0f3460; padding-bottom: 7px;
     }
 
     .field-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 12px;
+      display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
     }
+    .field-row label { width: 150px; color: #aaa; flex-shrink: 0; }
 
-    .field-row label {
-      width: 160px;
-      color: #bbb;
-      flex-shrink: 0;
+    input[type="number"], input[type="text"], input[type="range"] {
+      background: #0f3460; border: 1px solid #1a4a80;
+      color: #fff; border-radius: 6px; padding: 5px 9px; font-size: 14px;
     }
-
-    input[type="number"],
-    input[type="text"],
-    input[type="range"] {
-      background: #0f3460;
-      border: 1px solid #1a4a80;
-      color: #fff;
-      border-radius: 6px;
-      padding: 6px 10px;
-      font-size: 15px;
-    }
-
-    input[type="number"] { width: 90px; }
+    input[type="number"] { width: 80px; }
     input[type="text"]   { flex: 1; }
-    input[type="range"]  { width: 180px; accent-color: #a0c4ff; }
+    input[type="range"]  { width: 160px; accent-color: #a0c4ff; }
+    .vol-val { color: #a0c4ff; font-weight: bold; width: 38px; }
 
-    .vol-val { color: #a0c4ff; font-weight: bold; width: 40px; }
+    /* ── Groups editor ── */
+    #groups-container { display: flex; flex-direction: column; gap: 14px; }
 
-    /* Clues grid */
-    .clues-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+    .group-card {
+      background: #0f1a35;
+      border: 1px solid #1e2d55;
+      border-radius: 9px;
+      overflow: hidden;
     }
-
-    .clue-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .group-header {
+      display: flex; align-items: center; gap: 8px;
+      background: #1a2a50; padding: 10px 14px;
     }
-
-    .clue-label {
-      color: #888;
-      font-size: 13px;
-      width: 90px;
-      flex-shrink: 0;
-      text-align: right;
+    .group-name {
+      flex: 1; background: #0d1f40; border: 1px solid #1e3a6e;
+      color: #fff; border-radius: 6px; padding: 5px 9px; font-size: 14px;
+      font-weight: bold;
     }
+    .group-name::placeholder { color: #445; }
 
-    .clue-input {
-      flex: 1;
-      background: #0f3460;
-      border: 1px solid #1a4a80;
-      color: #fff;
-      border-radius: 6px;
-      padding: 5px 8px;
-      font-size: 14px;
-    }
+    .group-body { padding: 10px 14px 12px; }
 
-    /* Key hints */
-    .key-hint {
-      background: #0f3460;
-      border-radius: 4px;
-      padding: 2px 7px;
-      font-size: 12px;
-      color: #a0c4ff;
-      font-family: monospace;
+    /* ── Hints ── */
+    .hints-list { display: flex; flex-direction: column; gap: 7px; margin-bottom: 10px; }
+
+    .hint-row {
+      display: flex; align-items: center; gap: 8px;
     }
+    .hint-text-input {
+      flex: 1; background: #0f3460; border: 1px solid #1a4a80;
+      color: #fff; border-radius: 6px; padding: 5px 9px; font-size: 13px;
+    }
+    .hint-text-input::placeholder { color: #445; }
+
+    /* Key capture field */
+    .key-capture {
+      width: 110px; flex-shrink: 0;
+      background: #0a1a30; border: 1px solid #1a3a60;
+      color: #a0c4ff; border-radius: 6px; padding: 5px 8px;
+      font-size: 12px; font-family: monospace; text-align: center;
+      cursor: pointer; user-select: none; transition: border-color 0.15s;
+    }
+    .key-capture:focus { outline: none; border-color: #4a8aff; background: #0d2540; }
+    .key-capture.capturing { border-color: #ffd700; color: #ffd700; background: #1a1500; }
+    .key-capture.has-key  { border-color: #2a6a4a; color: #7fff7f; background: #0a1a0f; }
 
     /* Buttons */
-    .btn-row {
-      display: flex;
-      gap: 12px;
-      margin-top: 8px;
-    }
-
     button {
-      padding: 10px 28px;
-      border: none;
-      border-radius: 8px;
-      font-size: 15px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: opacity 0.2s;
+      border: none; border-radius: 7px; cursor: pointer; font-weight: bold;
+      font-size: 12px; transition: filter 0.15s, transform 0.1s;
+      user-select: none; white-space: nowrap;
     }
+    button:hover  { filter: brightness(1.2); }
+    button:active { transform: scale(0.96); }
 
-    button:hover { opacity: 0.85; }
+    .btn-icon { width: 30px; height: 30px; font-size: 15px; display: flex; align-items: center; justify-content: center; }
+    .btn-del-hint  { background: #3a1515; color: #ff7777; }
+    .btn-del-group { background: #3a1515; color: #ff7777; padding: 5px 10px; }
+    .btn-add-hint  { background: #0f3040; color: #7fb8ff; padding: 6px 12px; margin-top: 2px; font-size: 12px; }
+    .btn-add-group { background: #1a3a5e; color: #a0c4ff; padding: 9px 18px; font-size: 13px; }
+    .btn-save  { background: #2e7d32; color: #fff; padding: 11px 28px; font-size: 14px; }
+    .btn-reset { background: #424242; color: #ccc; padding: 11px 20px; font-size: 14px; }
 
-    #save-btn  { background: #4caf50; color: #fff; }
-    #reset-btn { background: #555; color: #ccc; }
-
-    #status-msg {
-      margin-top: 10px;
-      height: 22px;
-      color: #4caf50;
-      font-size: 14px;
+    .bottom-bar {
+      display: flex; gap: 10px; align-items: center; margin-top: 20px;
     }
+    #status-msg { color: #4caf50; font-size: 13px; }
 
-    .logo-preview {
-      max-height: 80px;
-      margin-top: 8px;
-      border-radius: 4px;
-      display: none;
-    }
+    /* Logo preview */
+    .logo-preview { max-height: 70px; margin-top: 8px; border-radius: 4px; display: none; }
 
-    .kbd-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-    .kbd-table td {
-      padding: 5px 10px;
-      border-bottom: 1px solid #0f3460;
-      color: #bbb;
-    }
+    /* Keyboard reference */
+    .kbd-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .kbd-table td { padding: 4px 10px; border-bottom: 1px solid #0f3460; color: #aaa; }
     .kbd-table td:first-child { color: #a0c4ff; font-family: monospace; }
   </style>
 </head>
 <body>
-  <h1>HTM Game Clock</h1>
-  <p class="subtitle">Configuration — changes take effect when you close this window</p>
 
-  <!-- Timer -->
-  <section>
-    <h2>Timer</h2>
-    <div class="field-row">
-      <label>Starting minutes</label>
-      <input type="number" id="timer-minutes" min="1" max="999" value="60" />
-    </div>
-    <div class="field-row">
-      <label>Start volume</label>
-      <input type="range" id="volume" min="0" max="100" value="40" />
-      <span class="vol-val" id="vol-display">40%</span>
-    </div>
-  </section>
+<h1>HTM Game Clock</h1>
+<p class="subtitle">Configuration — save to apply changes</p>
 
-  <!-- Display assignment -->
-  <section>
-    <h2>Display Assignment</h2>
-    <p style="color:#888;font-size:13px;margin-bottom:12px;">0 = primary monitor. If you only have one display both windows open on it.</p>
-    <div class="field-row">
-      <label>Game screen display</label>
-      <input type="number" id="game-display" min="0" max="9" value="1" style="width:70px" />
-    </div>
-    <div class="field-row">
-      <label>Operator screen display</label>
-      <input type="number" id="operator-display" min="0" max="9" value="0" style="width:70px" />
-    </div>
-  </section>
-
-  <!-- Logo -->
-  <section>
-    <h2>Logo Image</h2>
-    <div class="field-row">
-      <label>Image path</label>
-      <input type="text" id="logo-path" placeholder="C:\path\to\logo.png or leave empty" />
-    </div>
-    <img id="logo-preview" class="logo-preview" alt="Logo preview" />
-  </section>
-
-  <!-- Clues -->
-  <section>
-    <h2>Clues (up to 19)</h2>
-    <p style="color:#888; font-size:13px; margin-bottom:14px;">
-      Numpad 1–9 → Clues 1–9 &nbsp;|&nbsp; Number row 1–9, 0 → Clues 10–19
-    </p>
-    <div class="clues-grid" id="clues-grid"></div>
-  </section>
-
-  <!-- Keyboard reference -->
-  <section>
-    <h2>Keyboard Reference</h2>
-    <table class="kbd-table">
-      <tr><td>Click / Space</td><td>Start (from splash) / Mark "You Escaped!" (while running) / Resume (while paused)</td></tr>
-      <tr><td>Pause/Break</td><td>Pause or resume timer (no "Escaped" screen)</td></tr>
-      <tr><td>Scroll Lock</td><td>Reset timer to starting value</td></tr>
-      <tr><td>` (backtick)</td><td>Return to "Please wait" splash screen</td></tr>
-      <tr><td>Numpad +  /  −</td><td>Volume up / down (1% each press)</td></tr>
-      <tr><td>Numpad 1–9</td><td>Show clues 1–9</td></tr>
-      <tr><td>1–9, 0 (number row)</td><td>Show clues 10–19</td></tr>
-      <tr><td>Numpad / or Numpad 0</td><td>Hide clue text</td></tr>
-      <tr><td>F11</td><td>Toggle fullscreen</td></tr>
-      <tr><td>F12</td><td>Developer tools</td></tr>
-    </table>
-  </section>
-
-  <!-- Buttons -->
-  <div class="btn-row">
-    <button id="save-btn">Save &amp; Close</button>
-    <button id="reset-btn">Reset to Defaults</button>
+<!-- Timer settings -->
+<div class="card">
+  <h2>Timer</h2>
+  <div class="field-row">
+    <label>Starting minutes</label>
+    <input type="number" id="timer-minutes" min="1" max="999" value="60" />
   </div>
-  <div id="status-msg"></div>
+  <div class="field-row">
+    <label>Start volume</label>
+    <input type="range" id="volume" min="0" max="100" value="40" />
+    <span class="vol-val" id="vol-display">40%</span>
+  </div>
+</div>
 
-  <script>
-    const CLUE_LABELS = [
-      'Numpad 1', 'Numpad 2', 'Numpad 3', 'Numpad 4', 'Numpad 5',
-      'Numpad 6', 'Numpad 7', 'Numpad 8', 'Numpad 9',
-      'Row 1', 'Row 2', 'Row 3', 'Row 4', 'Row 5',
-      'Row 6', 'Row 7', 'Row 8', 'Row 9', 'Row 0',
-    ];
+<!-- Logo -->
+<div class="card">
+  <h2>Logo Image</h2>
+  <div class="field-row">
+    <label>Image URL / path</label>
+    <input type="text" id="logo-path" placeholder="http://… or assets/logo.png — leave empty for none" />
+  </div>
+  <img id="logo-preview" class="logo-preview" alt="" />
+</div>
 
-    const grid = document.getElementById('clues-grid');
-    const clueInputs = [];
+<!-- Hint groups -->
+<div class="card">
+  <h2>Hint Groups &amp; Hints</h2>
+  <p style="color:#666;font-size:12px;margin-bottom:14px;">
+    Click a key field and press any key to assign a shortcut. Click again to change, right-click to clear.
+    Groups and hints can be reordered by dragging (coming soon).
+  </p>
+  <div id="groups-container"></div>
+  <button class="btn-add-group" id="btn-add-group" style="margin-top:12px;">+ Add Group</button>
+</div>
 
-    CLUE_LABELS.forEach((label, i) => {
-      const row = document.createElement('div');
-      row.className = 'clue-row';
-      row.innerHTML = `<span class="clue-label"><span class="key-hint">${label}</span></span>`;
-      const inp = document.createElement('input');
-      inp.type = 'text';
-      inp.className = 'clue-input';
-      inp.placeholder = `Clue ${i + 1}…`;
-      row.appendChild(inp);
-      grid.appendChild(row);
-      clueInputs.push(inp);
-    });
+<!-- Keyboard reference -->
+<div class="card">
+  <h2>Timer Keyboard Reference</h2>
+  <table class="kbd-table">
+    <tr><td>Click / Space</td><td>Start → Mark Escaped → Resume</td></tr>
+    <tr><td>Pause/Break</td><td>Pause / Resume (no Escaped screen)</td></tr>
+    <tr><td>Scroll Lock or `</td><td>Return to waiting splash</td></tr>
+    <tr><td>Numpad + / −</td><td>Volume up / down</td></tr>
+    <tr><td>Numpad 0 or /</td><td>Hide hint on game screen</td></tr>
+    <tr><td>F11</td><td>Toggle fullscreen on game screen</td></tr>
+  </table>
+</div>
 
-    // Volume slider
-    const volSlider = document.getElementById('volume');
-    const volDisplay = document.getElementById('vol-display');
-    volSlider.addEventListener('input', () => {
-      volDisplay.textContent = volSlider.value + '%';
-    });
+<div class="bottom-bar">
+  <button class="btn-save"  id="save-btn">Save</button>
+  <button class="btn-reset" id="reset-btn">Reset to Defaults</button>
+  <span id="status-msg"></span>
+</div>
 
-    // Logo preview
-    const logoPathEl = document.getElementById('logo-path');
-    const logoPreview = document.getElementById('logo-preview');
-    logoPathEl.addEventListener('input', () => {
-      const p = logoPathEl.value.trim();
-      if (p) { logoPreview.src = p; logoPreview.style.display = 'block'; }
-      else   { logoPreview.style.display = 'none'; }
-    });
+<script>
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function loadConfig() {
+  try { return JSON.parse(localStorage.getItem('htm-config')) || {}; } catch(e) { return {}; }
+}
 
-    // Load config from localStorage
-    function loadConfig() {
-      try { return JSON.parse(localStorage.getItem('htm-config')) || {}; } catch(e) { return {}; }
+function saveConfig(cfg) {
+  localStorage.setItem('htm-config', JSON.stringify(cfg));
+}
+
+// Format a KeyboardEvent into a readable string
+function formatKey(e) {
+  const mods = [];
+  if (e.ctrlKey)  mods.push('Ctrl');
+  if (e.altKey)   mods.push('Alt');
+  if (e.shiftKey && e.key.length > 1) mods.push('Shift'); // skip Shift for simple chars
+  let k = e.key;
+  if (k === ' ') k = 'Space';
+  // Normalize numpad
+  if (e.code && e.code.startsWith('Numpad')) k = e.code.replace('Numpad','Num');
+  mods.push(k);
+  return mods.join('+');
+}
+
+// ── Group / Hint DOM builders ─────────────────────────────────────────────────
+let groupIdCounter = 0;
+
+function makeKeyCapture(initialKey) {
+  const el = document.createElement('div');
+  el.className = 'key-capture' + (initialKey ? ' has-key' : '');
+  el.tabIndex = 0;
+  el.textContent = initialKey || 'click to assign';
+  el.dataset.key = initialKey || '';
+
+  el.addEventListener('click', () => {
+    el.classList.add('capturing');
+    el.classList.remove('has-key');
+    el.textContent = '… press key …';
+    el.dataset.key = '';
+    el.focus();
+  });
+
+  el.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    el.dataset.key = '';
+    el.textContent = 'click to assign';
+    el.className = 'key-capture';
+  });
+
+  el.addEventListener('keydown', (e) => {
+    if (!el.classList.contains('capturing')) return;
+    e.preventDefault();
+    e.stopPropagation();
+    // Ignore bare modifier keys
+    if (['Control','Alt','Shift','Meta'].includes(e.key)) return;
+    const keyStr = formatKey(e);
+    el.dataset.key = keyStr;
+    el.textContent = keyStr;
+    el.className = 'key-capture has-key';
+  });
+
+  el.addEventListener('blur', () => {
+    if (el.classList.contains('capturing')) {
+      el.classList.remove('capturing');
+      el.textContent = el.dataset.key || 'click to assign';
+      if (el.dataset.key) el.classList.add('has-key');
     }
+  });
 
-    const cfg = loadConfig();
-    document.getElementById('timer-minutes').value = cfg.timerMinutes || 60;
-    volSlider.value = Math.round((cfg.volume || 0.4) * 100);
-    volDisplay.textContent = volSlider.value + '%';
-    logoPathEl.value = cfg.logoPath || '';
-    if (cfg.logoPath) { logoPreview.src = cfg.logoPath; logoPreview.style.display = 'block'; }
-    (cfg.clues || []).forEach((text, i) => { if (clueInputs[i]) clueInputs[i].value = text || ''; });
+  return el;
+}
 
-    // Save to localStorage
-    document.getElementById('save-btn').addEventListener('click', () => {
-      const saved = {
-        timerMinutes: parseInt(document.getElementById('timer-minutes').value) || 60,
-        volume:       parseInt(volSlider.value) / 100,
-        logoPath:     logoPathEl.value.trim(),
-        clues:        clueInputs.map(inp => inp.value),
-      };
-      localStorage.setItem('htm-config', JSON.stringify(saved));
-      document.getElementById('status-msg').textContent = 'Saved!';
-      setTimeout(() => window.close(), 600);
+function makeHintRow(text, key) {
+  const row = document.createElement('div');
+  row.className = 'hint-row';
+
+  const textInput = document.createElement('input');
+  textInput.type = 'text';
+  textInput.className = 'hint-text-input';
+  textInput.placeholder = 'Hint text…';
+  textInput.value = text || '';
+
+  const keyEl = makeKeyCapture(key || '');
+
+  const delBtn = document.createElement('button');
+  delBtn.className = 'btn-icon btn-del-hint';
+  delBtn.title = 'Delete hint';
+  delBtn.textContent = '✕';
+  delBtn.addEventListener('click', () => row.remove());
+
+  row.appendChild(textInput);
+  row.appendChild(keyEl);
+  row.appendChild(delBtn);
+  return row;
+}
+
+function makeGroupCard(groupData) {
+  const id = ++groupIdCounter;
+  const card = document.createElement('div');
+  card.className = 'group-card';
+
+  // Header
+  const header = document.createElement('div');
+  header.className = 'group-header';
+
+  const nameInput = document.createElement('input');
+  nameInput.type = 'text';
+  nameInput.className = 'group-name';
+  nameInput.placeholder = 'Group name (e.g. Room 1 — Kitchen)';
+  nameInput.value = groupData.name || '';
+
+  const delGroupBtn = document.createElement('button');
+  delGroupBtn.className = 'btn-del-group';
+  delGroupBtn.textContent = '✕ Delete Group';
+  delGroupBtn.addEventListener('click', () => {
+    if (confirm('Delete this group and all its hints?')) card.remove();
+  });
+
+  header.appendChild(nameInput);
+  header.appendChild(delGroupBtn);
+
+  // Body
+  const body = document.createElement('div');
+  body.className = 'group-body';
+
+  const hintsList = document.createElement('div');
+  hintsList.className = 'hints-list';
+
+  (groupData.hints || []).forEach(h => {
+    hintsList.appendChild(makeHintRow(h.text, h.key));
+  });
+
+  const addHintBtn = document.createElement('button');
+  addHintBtn.className = 'btn-add-hint';
+  addHintBtn.textContent = '+ Add Hint';
+  addHintBtn.addEventListener('click', () => {
+    hintsList.appendChild(makeHintRow('', ''));
+  });
+
+  body.appendChild(hintsList);
+  body.appendChild(addHintBtn);
+
+  card.appendChild(header);
+  card.appendChild(body);
+  return card;
+}
+
+// ── Read groups back from DOM ─────────────────────────────────────────────────
+function readGroupsFromDOM() {
+  const groups = [];
+  document.querySelectorAll('.group-card').forEach(card => {
+    const name = card.querySelector('.group-name').value.trim();
+    const hints = [];
+    card.querySelectorAll('.hint-row').forEach(row => {
+      const text = row.querySelector('.hint-text-input').value.trim();
+      const key  = row.querySelector('.key-capture').dataset.key || '';
+      if (text) hints.push({ text, key });
     });
+    if (name || hints.length) groups.push({ name, hints });
+  });
+  return groups;
+}
 
-    // Reset
-    document.getElementById('reset-btn').addEventListener('click', () => {
-      document.getElementById('timer-minutes').value = 60;
-      volSlider.value = 40;
-      volDisplay.textContent = '40%';
-      logoPathEl.value = '';
-      logoPreview.style.display = 'none';
-      clueInputs.forEach(inp => inp.value = '');
-    });
-  </script>
+// ── Init ──────────────────────────────────────────────────────────────────────
+const cfg = loadConfig();
+
+document.getElementById('timer-minutes').value = cfg.timerMinutes || 60;
+const volSlider = document.getElementById('volume');
+const volDisplay = document.getElementById('vol-display');
+volSlider.value = Math.round((cfg.volume || 0.4) * 100);
+volDisplay.textContent = volSlider.value + '%';
+volSlider.addEventListener('input', () => volDisplay.textContent = volSlider.value + '%');
+
+const logoPathEl  = document.getElementById('logo-path');
+const logoPreview = document.getElementById('logo-preview');
+logoPathEl.value = cfg.logoPath || '';
+if (cfg.logoPath) { logoPreview.src = cfg.logoPath; logoPreview.style.display = 'block'; }
+logoPathEl.addEventListener('input', () => {
+  const p = logoPathEl.value.trim();
+  if (p) { logoPreview.src = p; logoPreview.style.display = 'block'; }
+  else   { logoPreview.style.display = 'none'; }
+});
+
+// Populate groups
+const container = document.getElementById('groups-container');
+const groups = cfg.hintGroups || [];
+if (groups.length === 0) {
+  // Default starter group
+  container.appendChild(makeGroupCard({ name: 'Hints', hints: [] }));
+} else {
+  groups.forEach(g => container.appendChild(makeGroupCard(g)));
+}
+
+document.getElementById('btn-add-group').addEventListener('click', () => {
+  container.appendChild(makeGroupCard({ name: '', hints: [] }));
+});
+
+// ── Save ──────────────────────────────────────────────────────────────────────
+document.getElementById('save-btn').addEventListener('click', () => {
+  const saved = {
+    timerMinutes: parseInt(document.getElementById('timer-minutes').value) || 60,
+    volume:       parseInt(volSlider.value) / 100,
+    logoPath:     logoPathEl.value.trim(),
+    hintGroups:   readGroupsFromDOM(),
+  };
+  saveConfig(saved);
+  document.getElementById('status-msg').textContent = '✓ Saved!';
+  setTimeout(() => document.getElementById('status-msg').textContent = '', 2000);
+});
+
+// ── Reset ─────────────────────────────────────────────────────────────────────
+document.getElementById('reset-btn').addEventListener('click', () => {
+  if (!confirm('Reset all settings to defaults?')) return;
+  document.getElementById('timer-minutes').value = 60;
+  volSlider.value = 40; volDisplay.textContent = '40%';
+  logoPathEl.value = ''; logoPreview.style.display = 'none';
+  container.innerHTML = '';
+  container.appendChild(makeGroupCard({ name: 'Hints', hints: [] }));
+});
+</script>
 </body>
 </html>

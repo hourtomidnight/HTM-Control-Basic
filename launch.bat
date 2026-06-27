@@ -21,8 +21,8 @@ timeout /t 2 /nobreak >nul
 
 :: Open game screen and operator screen in default browser
 :: Try Microsoft Edge first, then Chrome, then default browser
-set GAME_URL=http://127.0.0.1:3000/game.html
-set OPERATOR_URL=http://127.0.0.1:3000/operator.html
+set GAME_URL=http://127.0.0.1:4000/game.html
+set OPERATOR_URL=http://127.0.0.1:4000/operator.html
 
 where msedge >nul 2>&1
 if %errorlevel% == 0 (

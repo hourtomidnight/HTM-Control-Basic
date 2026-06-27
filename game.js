@@ -1,29 +1,43 @@
-// ── BroadcastChannel (replaces Electron IPC) ──────────────────────────────────
 const channel = new BroadcastChannel('htm-game-clock');
 
-// ── Config (localStorage) ─────────────────────────────────────────────────────
+// ── Config ────────────────────────────────────────────────────────────────────
+let cfg = {};
+let startMinutes = 60;
+let keyMap = {}; // key string → hint text
+
 function loadConfig() {
   try { return JSON.parse(localStorage.getItem('htm-config')) || {}; } catch(e) { return {}; }
 }
 
-let cfg = loadConfig();
-let startMinutes = cfg.timerMinutes || 60;
+function buildKeyMap(config) {
+  keyMap = {};
+  (config.hintGroups || []).forEach(group => {
+    (group.hints || []).forEach(hint => {
+      if (hint.key && hint.text) keyMap[hint.key] = hint.text;
+    });
+  });
+}
 
 function applyConfig() {
   cfg = loadConfig();
   startMinutes = cfg.timerMinutes || 60;
   setVolume(cfg.volume ?? 0.4);
   logoEl.src = cfg.logoPath || '';
+  buildKeyMap(cfg);
   if (timerHasStopped) resetTimer();
 }
 
+window.addEventListener('storage', (e) => {
+  if (e.key === 'htm-config') applyConfig();
+});
+
 // ── State ─────────────────────────────────────────────────────────────────────
 let clockForward    = false;
-let currentMin      = startMinutes;
+let currentMin      = 60;
 let currentSec      = 0;
 let timerHasStopped = true;
 let onSplash        = true;
-let volume          = cfg.volume ?? 0.4;
+let volume          = 0.4;
 let clueCount       = 0;
 let musicPauseMs    = 0;
 
@@ -54,14 +68,11 @@ function setVolume(v) {
   timerMusic.volume = finaleMusic.volume = clueSound.volume = volume;
   volumeBarEl.textContent = 'Vol: ' + Math.round(volume * 100) + '%';
 }
-function playTimerMusic()  { timerMusic.currentTime = musicPauseMs / 1000; timerMusic.play().catch(()=>{}); }
-function stopTimerMusic()  { musicPauseMs = timerMusic.currentTime * 1000; timerMusic.pause(); }
+function playTimerMusic()  { timerMusic.currentTime = musicPauseMs/1000; timerMusic.play().catch(()=>{}); }
+function stopTimerMusic()  { musicPauseMs = timerMusic.currentTime*1000; timerMusic.pause(); }
 function playFinaleMusic() { finaleMusic.currentTime = 0; finaleMusic.play().catch(()=>{}); }
 function stopFinaleMusic() { finaleMusic.pause(); finaleMusic.currentTime = 0; }
 function playClueSound()   { clueSound.currentTime = 0; clueSound.play().catch(()=>{}); }
-
-setVolume(volume);
-if (cfg.logoPath) logoEl.src = cfg.logoPath;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function pad(n) { return n < 10 ? '0' + n : '' + n; }
@@ -78,7 +89,8 @@ function broadcastState() {
 
 // ── Actions ───────────────────────────────────────────────────────────────────
 function resetTimer() {
-  currentMin = startMinutes; currentSec = 0; clockForward = false; timerHasStopped = true;
+  currentMin = startMinutes; currentSec = 0;
+  clockForward = false; timerHasStopped = true;
   updateTimerDisplay(); statusEl.textContent = 'PAUSED'; broadcastState();
 }
 
@@ -108,8 +120,8 @@ function markEscaped() {
   splashTextEl.style.fontSize = '12vw';
   const remMin = clockForward ? currentMin : (startMinutes - 1) - currentMin;
   const remSec = clockForward ? currentSec : 59 - currentSec;
-  const label  = clockForward ? 'over' : 'remaining';
-  splashTextEl.textContent = 'You Escaped!\n' + pad(remMin) + ':' + pad(remSec) + ' ' + label;
+  splashTextEl.textContent = 'You Escaped!\n' + pad(remMin) + ':' + pad(remSec) +
+    (clockForward ? ' over' : ' remaining');
   splashEl.classList.remove('hidden');
   playFinaleMusic(); statusEl.textContent = 'ESCAPED'; broadcastState();
 }
@@ -132,9 +144,8 @@ function adjustTime(dMin, dSec) {
   updateTimerDisplay(); broadcastState();
 }
 
-function showClue(index) {
-  const text = (cfg.clues || [])[index];
-  if (!text && text !== '') return;
+function showHint(text) {
+  if (!text) return;
   clueBoxEl.textContent = text;
   clueCount++; clueCountEl.textContent = 'Clues: ' + clueCount;
   playClueSound(); broadcastState();
@@ -142,11 +153,24 @@ function showClue(index) {
 
 function hideClue() { clueBoxEl.textContent = ''; }
 
-// ── Operator commands via BroadcastChannel ────────────────────────────────────
+// ── Key event → key string (mirrors config.html formatKey) ───────────────────
+function eventToKeyString(e) {
+  const mods = [];
+  if (e.ctrlKey)  mods.push('Ctrl');
+  if (e.altKey)   mods.push('Alt');
+  if (e.shiftKey && e.key.length > 1) mods.push('Shift');
+  let k = e.key;
+  if (k === ' ') k = 'Space';
+  if (e.code && e.code.startsWith('Numpad')) k = e.code.replace('Numpad', 'Num');
+  mods.push(k);
+  return mods.join('+');
+}
+
+// ── BroadcastChannel commands ─────────────────────────────────────────────────
 channel.addEventListener('message', (e) => {
-  const cmd = e.data;
-  if (!cmd || cmd.type === 'state') return;
-  switch (cmd.type) {
+  const c = e.data;
+  if (!c || c.type === 'state') return;
+  switch (c.type) {
     case 'start':          startGame(); break;
     case 'pause':          pauseTimer(); break;
     case 'resume':         resumeTimer(); break;
@@ -156,7 +180,7 @@ channel.addEventListener('message', (e) => {
     case 'sub-min':        adjustTime(-1, 0); break;
     case 'add-sec':        adjustTime(0, 1); break;
     case 'sub-sec':        adjustTime(0, -1); break;
-    case 'show-clue':      showClue(cmd.index); break;
+    case 'show-hint':      showHint(c.text); break;
     case 'hide-clue':      hideClue(); break;
     case 'vol-up':         setVolume(volume + 0.01); broadcastState(); break;
     case 'vol-down':       setVolume(volume - 0.01); broadcastState(); break;
@@ -165,27 +189,32 @@ channel.addEventListener('message', (e) => {
   }
 });
 
-// ── Click / keyboard ──────────────────────────────────────────────────────────
+// ── Keyboard ──────────────────────────────────────────────────────────────────
 function handleActivate() {
   if (onSplash && timerHasStopped) { startGame(); return; }
   if (!timerHasStopped) { markEscaped(); return; }
   resumeTimer();
 }
 
-const NUMPAD_CLUE = {97:0,98:1,99:2,100:3,101:4,102:5,103:6,104:7,105:8};
-const ROW_CLUE    = {49:9,50:10,51:11,52:12,53:13,54:14,55:15,56:16,57:17,48:18};
-
 document.addEventListener('keydown', (e) => {
   const k = e.keyCode;
-  if (k===32)  { handleActivate(); return; }
-  if (k===19)  { timerHasStopped ? resumeTimer() : pauseTimer(); return; }
-  if (k===145||k===192) { showWaitingSplash(); return; }
-  if (k===107) { setVolume(volume+0.01); broadcastState(); return; }
-  if (k===109) { setVolume(volume-0.01); broadcastState(); return; }
-  if (k===111||k===96) { hideClue(); return; }
-  if (NUMPAD_CLUE[k]!==undefined) { showClue(NUMPAD_CLUE[k]); return; }
-  if (ROW_CLUE[k]!==undefined)    { showClue(ROW_CLUE[k]); return; }
+
+  // Fixed timer controls
+  if (k === 32)  { handleActivate(); return; }
+  if (k === 19)  { timerHasStopped ? resumeTimer() : pauseTimer(); return; }
+  if (k === 145 || k === 192) { showWaitingSplash(); return; }
+  if (k === 107) { setVolume(volume + 0.01); broadcastState(); return; }
+  if (k === 109) { setVolume(volume - 0.01); broadcastState(); return; }
+  if (k === 111 || k === 96) { hideClue(); return; }
+
+  // Check configured hint keys
+  const keyStr = eventToKeyString(e);
+  if (keyMap[keyStr]) {
+    e.preventDefault();
+    showHint(keyMap[keyStr]);
+  }
 });
+
 document.addEventListener('click', handleActivate);
 
 // ── Timer loop ────────────────────────────────────────────────────────────────
@@ -202,3 +231,6 @@ setInterval(() => {
   }
   updateTimerDisplay(); broadcastState();
 }, 1000);
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+applyConfig();
