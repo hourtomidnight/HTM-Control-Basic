@@ -1,0 +1,6 @@
+backend/target/
+backend/*.db
+backend/*.db-journal
+backend/.env
+frontend/node_modules/
+frontend/dist/
