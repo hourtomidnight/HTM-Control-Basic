@@ -24,6 +24,7 @@ function applyConfig() {
   setVolume(cfg.volume ?? 0.4);
   logoEl.src = cfg.logoPath || '';
   buildKeyMap(cfg);
+  restartHintCycle(); // pick up new cycle speed if changed
   if (timerHasStopped) resetTimer();
 }
 
@@ -41,6 +42,9 @@ let gameLocked      = false; // true after Stop — must reset to clear
 let volume          = 0.4;
 let clueCount       = 0;
 let musicPauseMs    = 0;
+let activeHints     = [];   // texts currently shown on screen
+let hintCycleIdx    = 0;
+let hintCycleTimer  = null;
 
 // ── DOM ───────────────────────────────────────────────────────────────────────
 const splashEl     = document.getElementById('splash');
@@ -85,7 +89,8 @@ function updateTimerDisplay() {
 
 function broadcastState() {
   channel.postMessage({ type: 'state', currentMin, currentSec, clockForward,
-    timerHasStopped, onSplash, gameLocked, clueCount, volume, startMinutes });
+    timerHasStopped, onSplash, gameLocked, clueCount, volume, startMinutes,
+    activeHints: activeHints.slice() });
 }
 
 // ── Actions ───────────────────────────────────────────────────────────────────
@@ -140,8 +145,9 @@ function handleStartStop() {
 function showWaitingSplash() {
   stopTimerMusic(); stopFinaleMusic(); musicPauseMs = 0; onSplash = true;
   gameLocked = false; // reset clears the lock
+  activeHints = []; hintCycleIdx = 0; stopHintCycle();
   logoEl.classList.remove('visible'); negativeEl.style.opacity = '0';
-  clueBoxEl.textContent = '...'; clueCount = 0; clueCountEl.textContent = 'Clues: 0';
+  clueBoxEl.textContent = ''; clueCount = 0; clueCountEl.textContent = 'Clues: 0';
   splashTextEl.classList.add('dim'); splashTextEl.style.fontSize = '';
   splashTextEl.textContent = 'Please wait until you are instructed to begin.';
   splashEl.classList.remove('hidden');
@@ -156,14 +162,72 @@ function adjustTime(dMin, dSec) {
   updateTimerDisplay(); broadcastState();
 }
 
-function showHint(text) {
-  if (!text) return;
-  clueBoxEl.textContent = text;
-  clueCount++; clueCountEl.textContent = 'Clues: ' + clueCount;
-  playClueSound(); broadcastState();
+// ── Hint cycling ──────────────────────────────────────────────────────────────
+function getCycleMs() { return ((cfg.hintCycleSeconds || 5) * 1000); }
+
+function renderCurrentHint() {
+  if (activeHints.length === 0) { clueBoxEl.textContent = ''; return; }
+  if (hintCycleIdx >= activeHints.length) hintCycleIdx = 0;
+  clueBoxEl.textContent = activeHints[hintCycleIdx];
 }
 
-function hideClue() { clueBoxEl.textContent = ''; }
+function fadeToNextHint() {
+  clueBoxEl.classList.add('fading');
+  setTimeout(() => {
+    hintCycleIdx = (hintCycleIdx + 1) % activeHints.length;
+    renderCurrentHint();
+    clueBoxEl.classList.remove('fading');
+  }, 420);
+}
+
+function startHintCycle() {
+  if (hintCycleTimer || activeHints.length <= 1) return;
+  hintCycleTimer = setInterval(fadeToNextHint, getCycleMs());
+}
+
+function stopHintCycle() {
+  if (hintCycleTimer) { clearInterval(hintCycleTimer); hintCycleTimer = null; }
+}
+
+function restartHintCycle() {
+  stopHintCycle();
+  if (activeHints.length > 1) startHintCycle();
+}
+
+function showHint(text) {
+  if (!text) return;
+  if (!activeHints.includes(text)) {
+    activeHints.push(text);
+    clueCount++;
+    clueCountEl.textContent = 'Clues: ' + clueCount;
+    if (activeHints.length === 1) {
+      hintCycleIdx = 0;
+      renderCurrentHint();
+    }
+    restartHintCycle();
+    playClueSound();
+  }
+  broadcastState();
+}
+
+function dismissHint(text) {
+  const idx = activeHints.indexOf(text);
+  if (idx === -1) return;
+  activeHints.splice(idx, 1);
+  if (hintCycleIdx >= activeHints.length) hintCycleIdx = 0;
+  restartHintCycle();
+  clueBoxEl.classList.add('fading');
+  setTimeout(() => { renderCurrentHint(); clueBoxEl.classList.remove('fading'); }, 420);
+  broadcastState();
+}
+
+function hideClue() {
+  activeHints = []; hintCycleIdx = 0;
+  stopHintCycle();
+  clueBoxEl.classList.add('fading');
+  setTimeout(() => { clueBoxEl.textContent = ''; clueBoxEl.classList.remove('fading'); }, 420);
+  broadcastState();
+}
 
 // ── Key event → key string (mirrors config.html formatKey) ───────────────────
 function eventToKeyString(e) {
@@ -193,6 +257,7 @@ channel.addEventListener('message', (e) => {
     case 'add-sec':        adjustTime(0, 1); break;
     case 'sub-sec':        adjustTime(0, -1); break;
     case 'show-hint':      showHint(c.text); break;
+    case 'dismiss-hint':   dismissHint(c.text); break;
     case 'hide-clue':      hideClue(); break;
     case 'vol-up':         setVolume(volume + 0.01); broadcastState(); break;
     case 'vol-down':       setVolume(volume - 0.01); broadcastState(); break;

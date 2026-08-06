@@ -139,6 +139,13 @@
     <input type="range" id="volume" min="0" max="100" value="40" />
     <span class="vol-val" id="vol-display">40%</span>
   </div>
+  <div class="field-row">
+    <label style="line-height:1.3;">Hint cycle speed
+      <div style="color:#555;font-size:11px;margin-top:2px;">Seconds between hints when<br>multiple are on screen.</div>
+    </label>
+    <input type="number" id="hint-cycle-seconds" min="1" max="60" value="5" />
+    <span style="color:#666;font-size:12px;">sec</span>
+  </div>
   <div class="field-row" style="margin-top:10px;padding-top:10px;border-top:1px solid #0f3460;">
     <label style="line-height:1.3;">Start / Stop key
       <div style="color:#555;font-size:11px;margin-top:2px;">Press 1× to start, press again to stop.<br>Locked until room is reset.</div>
@@ -355,6 +362,7 @@ function readGroupsFromDOM() {
 const cfg = loadConfig();
 
 document.getElementById('timer-minutes').value = cfg.timerMinutes || 60;
+document.getElementById('hint-cycle-seconds').value = cfg.hintCycleSeconds || 5;
 const volSlider = document.getElementById('volume');
 const volDisplay = document.getElementById('vol-display');
 volSlider.value = Math.round((cfg.volume || 0.4) * 100);
@@ -425,11 +433,12 @@ document.getElementById('btn-add-group').addEventListener('click', () => {
 // ── Save ──────────────────────────────────────────────────────────────────────
 document.getElementById('save-btn').addEventListener('click', () => {
   const saved = {
-    timerMinutes: parseInt(document.getElementById('timer-minutes').value) || 60,
-    volume:       parseInt(volSlider.value) / 100,
-    logoPath:     logoPathEl.value.trim(),
-    startStopKey: startStopCapture.dataset.key || '',
-    hintGroups:   readGroupsFromDOM(),
+    timerMinutes:     parseInt(document.getElementById('timer-minutes').value) || 60,
+    hintCycleSeconds: parseInt(document.getElementById('hint-cycle-seconds').value) || 5,
+    volume:           parseInt(volSlider.value) / 100,
+    logoPath:         logoPathEl.value.trim(),
+    startStopKey:     startStopCapture.dataset.key || '',
+    hintGroups:       readGroupsFromDOM(),
   };
   saveConfig(saved);
   document.getElementById('status-msg').textContent = '✓ Saved!';
@@ -440,6 +449,7 @@ document.getElementById('save-btn').addEventListener('click', () => {
 document.getElementById('reset-btn').addEventListener('click', () => {
   if (!confirm('Reset all settings to defaults?')) return;
   document.getElementById('timer-minutes').value = 60;
+  document.getElementById('hint-cycle-seconds').value = 5;
   volSlider.value = 40; volDisplay.textContent = '40%';
   logoPathEl.value = ''; logoPreview.style.display = 'none';
   startStopCapture.dataset.key = '';

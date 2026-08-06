@@ -173,7 +173,35 @@ channel.addEventListener('message', (e) => {
 
   volDisplay.textContent = Math.round((data.volume || 0) * 100) + '%';
   clueCountEl.textContent = data.clueCount || 0;
+
+  buildActiveHints(data.activeHints || []);
 });
+
+function buildActiveHints(hints) {
+  const list = document.getElementById('active-hints-list');
+  list.innerHTML = '';
+  if (!hints.length) {
+    list.innerHTML = '<div id="no-active-hints">None</div>';
+    return;
+  }
+  hints.forEach(text => {
+    const row = document.createElement('div');
+    row.className = 'active-hint-row';
+
+    const textEl = document.createElement('div');
+    textEl.className = 'active-hint-text';
+    textEl.textContent = text;
+
+    const btn = document.createElement('button');
+    btn.className = 'btn-dismiss-hint';
+    btn.textContent = 'Dismiss';
+    btn.addEventListener('click', () => cmd('dismiss-hint', { text }));
+
+    row.appendChild(textEl);
+    row.appendChild(btn);
+    list.appendChild(row);
+  });
+}
 
 // ── Build grouped hints from config ──────────────────────────────────────────
 function buildHints() {
