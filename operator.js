@@ -28,6 +28,119 @@ document.getElementById('btn-cfg').addEventListener('click', () => {
   window.open('/config.html', 'config', 'width=960,height=900,resizable=yes');
 });
 
+// ── Multi-monitor / game window management ────────────────────────────────────
+let screenDetails = null;
+let gameWin = null;
+
+function loadConfig() {
+  try { return JSON.parse(localStorage.getItem('htm-config')) || {}; } catch(e) { return {}; }
+}
+function saveConfig(cfg) {
+  localStorage.setItem('htm-config', JSON.stringify(cfg));
+}
+
+function getScreens() {
+  if (screenDetails && screenDetails.screens) return Array.from(screenDetails.screens);
+  // Fallback: just report the one screen we know about
+  return [{ label: 'Primary', width: screen.width, height: screen.height, left: 0, top: 0, isPrimary: true }];
+}
+
+function buildScreenUI() {
+  const cfg = loadConfig();
+  const screens = getScreens();
+  const screenList = document.getElementById('screen-list');
+  if (!screenList) return;
+  screenList.innerHTML = '';
+
+  const savedIdx = cfg.gameScreenIndex ?? 1;
+
+  screens.forEach((s, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'screen-btn' + (i === savedIdx ? ' current' : '');
+    const label = s.label || ('Screen ' + (i + 1));
+    const dims  = s.width + '×' + s.height;
+    const tag   = s.isPrimary ? ' ★' : '';
+    btn.innerHTML = '<span class="sc-name">' + label + tag + '</span>' +
+                    '<span class="sc-dims">' + dims + '</span>' +
+                    '<span class="sc-act">' + (i === savedIdx ? 'Game ▶' : 'Move game') + '</span>';
+    btn.addEventListener('click', () => moveGameToScreen(i));
+    screenList.appendChild(btn);
+  });
+
+  const note = document.createElement('div');
+  note.className = 'screen-note';
+  note.textContent = screens.length <= 1
+    ? 'Only one screen detected. Connect a second monitor and refresh.'
+    : screens.length + ' screens detected.';
+  screenList.appendChild(note);
+}
+
+function openGameWindow() {
+  if (gameWin && !gameWin.closed) { gameWin.focus(); return; }
+
+  const cfg = loadConfig();
+  const screens = getScreens();
+  const idx = cfg.gameScreenIndex ?? (screens.length > 1 ? 1 : 0);
+  const s = screens[Math.min(idx, screens.length - 1)];
+  const left = s.left ?? 0;
+  const top  = s.top  ?? 0;
+  const w    = s.width  || 1920;
+  const h    = s.height || 1080;
+
+  gameWin = window.open(
+    '/game.html', 'htm-game-screen',
+    'left=' + left + ',top=' + top + ',width=' + w + ',height=' + h
+  );
+}
+
+function moveGameToScreen(idx) {
+  const screens = getScreens();
+  const s = screens[Math.min(idx, screens.length - 1)];
+  const left = s.left ?? 0;
+  const top  = s.top  ?? 0;
+  const w    = s.width  || 1920;
+  const h    = s.height || 1080;
+
+  if (gameWin && !gameWin.closed) {
+    gameWin.moveTo(left, top);
+    gameWin.resizeTo(w, h);
+    // Tell game to maximize itself to fill the screen it's now on
+    setTimeout(() => channel.postMessage({ type: 'maximize' }), 200);
+  } else {
+    // Game window was closed — reopen on new screen
+    gameWin = window.open(
+      '/game.html', 'htm-game-screen',
+      'left=' + left + ',top=' + top + ',width=' + w + ',height=' + h
+    );
+  }
+
+  const cfg = loadConfig();
+  cfg.gameScreenIndex = idx;
+  saveConfig(cfg);
+  buildScreenUI();
+}
+
+async function initScreens() {
+  if ('getScreenDetails' in window) {
+    try {
+      screenDetails = await window.getScreenDetails();
+      screenDetails.addEventListener('screenschange', buildScreenUI);
+    } catch(e) {
+      // Permission denied or API unavailable — use fallback
+    }
+  }
+  buildScreenUI();
+  openGameWindow();
+}
+
+document.getElementById('btn-reopen-game').addEventListener('click', () => {
+  if (gameWin && !gameWin.closed) { gameWin.focus(); return; }
+  gameWin = null;
+  openGameWindow();
+});
+
+initScreens();
+
 // ── State mirror ──────────────────────────────────────────────────────────────
 let currentState = { currentMin:60, currentSec:0, clockForward:false,
   timerHasStopped:true, onSplash:true, clueCount:0, volume:0.4 };
@@ -63,10 +176,6 @@ channel.addEventListener('message', (e) => {
 });
 
 // ── Build grouped hints from config ──────────────────────────────────────────
-function loadConfig() {
-  try { return JSON.parse(localStorage.getItem('htm-config')) || {}; } catch(e) { return {}; }
-}
-
 function buildHints() {
   const cfg = loadConfig();
   const groups = cfg.hintGroups || [];

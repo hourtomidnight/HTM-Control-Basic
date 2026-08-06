@@ -198,6 +198,7 @@ channel.addEventListener('message', (e) => {
     case 'vol-down':       setVolume(volume - 0.01); broadcastState(); break;
     case 'config-updated': applyConfig(); break;
     case 'request-state':  broadcastState(); break;
+    case 'maximize':       maximizeWindow(); break;
   }
 });
 
@@ -244,5 +245,13 @@ setInterval(() => {
   updateTimerDisplay(); broadcastState();
 }, 1000);
 
+// ── Window maximize ───────────────────────────────────────────────────────────
+function maximizeWindow() {
+  window.moveTo(screen.availLeft || 0, screen.availTop || 0);
+  window.resizeTo(screen.availWidth || screen.width, screen.availHeight || screen.height);
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 applyConfig();
+// Maximize on load after a short delay so the window is fully positioned first
+setTimeout(maximizeWindow, 300);

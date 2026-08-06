@@ -160,6 +160,27 @@
     .hint-text { font-size: 13px; line-height: 1.3; flex: 1; }
 
     #no-hints-msg { color: #334; font-size: 13px; text-align: center; margin-top: 30px; }
+
+    /* ── Screen switcher ── */
+    .screen-btn {
+      width: 100%; padding: 7px 10px; margin-bottom: 5px;
+      background: #0f1a30; border: 1px solid #1e2d55;
+      color: #a0c4ff; border-radius: 7px; text-align: left;
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; cursor: pointer;
+    }
+    .screen-btn:hover { background: #16274a; border-color: #2e4a8a; }
+    .screen-btn.current { border-color: #2e7d32; background: #0a1f10; }
+    .screen-btn .sc-name { flex: 1; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .screen-btn .sc-dims { color: #556; font-size: 10px; white-space: nowrap; }
+    .screen-btn .sc-act  { font-size: 10px; color: #4a8; white-space: nowrap; }
+    .screen-btn.current .sc-act { color: #7fff7f; }
+    .screen-note { font-size: 10px; color: #334; text-align: center; margin-top: 4px; }
+
+    .btn-reopen-game {
+      width: 100%; padding: 6px; background: #1a2a3a; color: #7fb8ff;
+      font-size: 11px; border-radius: 7px; margin-top: 4px;
+    }
   </style>
 </head>
 <body>
@@ -217,6 +238,12 @@
     <div id="clue-count-display">0</div>
     <div id="clue-count-label">USED</div>
     <button class="btn-hide-clue" id="btn-hide-clue">✕ Hide Hint on Screen</button>
+  </div>
+
+  <div class="ctrl-section">
+    <h3>Game Screen</h3>
+    <div id="screen-list"><div class="screen-note">Detecting screens…</div></div>
+    <button class="btn-reopen-game" id="btn-reopen-game">↗ Reopen Game Window</button>
   </div>
 </div>
 
