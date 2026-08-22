@@ -1,4 +1,4 @@
-const channel = new BroadcastChannel('htm-game-clock');
+// channel is defined by channel.js (SSE + HTTP POST, works cross-device)
 
 // ── Config ────────────────────────────────────────────────────────────────────
 let cfg = {};
@@ -6,7 +6,20 @@ let startMinutes = 60;
 let keyMap = {}; // key string → hint text
 
 function loadConfig() {
-  try { return JSON.parse(localStorage.getItem('htm-config')) || {}; } catch(e) { return {}; }
+  // Sync fallback — config is fetched async on init; this returns the cached copy
+  try { return JSON.parse(sessionStorage.getItem('htm-config') || localStorage.getItem('htm-config')) || {}; } catch(e) { return {}; }
+}
+
+async function fetchConfig() {
+  try {
+    const r = await fetch('/config');
+    if (r.ok) {
+      const cfg = await r.json();
+      sessionStorage.setItem('htm-config', JSON.stringify(cfg));
+      return cfg;
+    }
+  } catch(e) {}
+  return loadConfig();
 }
 
 function buildKeyMap(config) {
@@ -31,6 +44,16 @@ function applyConfig() {
 window.addEventListener('storage', (e) => {
   if (e.key === 'htm-config') applyConfig();
 });
+
+async function applyConfigAsync() {
+  cfg = await fetchConfig();
+  startMinutes = cfg.timerMinutes || 60;
+  setVolume(cfg.volume ?? 0.4);
+  logoEl.src = cfg.logoPath || '';
+  buildKeyMap(cfg);
+  restartHintCycle();
+  if (timerHasStopped) resetTimer();
+}
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let clockForward    = false;
@@ -261,7 +284,7 @@ channel.addEventListener('message', (e) => {
     case 'hide-clue':      hideClue(); break;
     case 'vol-up':         setVolume(volume + 0.01); broadcastState(); break;
     case 'vol-down':       setVolume(volume - 0.01); broadcastState(); break;
-    case 'config-updated': applyConfig(); break;
+    case 'config-updated': applyConfigAsync(); break;
     case 'request-state':  broadcastState(); break;
     case 'maximize':       maximizeWindow(); break;
   }
@@ -317,6 +340,6 @@ function maximizeWindow() {
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
-applyConfig();
+applyConfigAsync();
 // Maximize on load after a short delay so the window is fully positioned first
 setTimeout(maximizeWindow, 300);

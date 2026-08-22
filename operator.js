@@ -1,4 +1,4 @@
-const channel = new BroadcastChannel('htm-game-clock');
+// channel is defined by channel.js (SSE + HTTP POST, works cross-device)
 
 // ── DOM ───────────────────────────────────────────────────────────────────────
 const bigTimer    = document.getElementById('big-timer');
@@ -33,10 +33,26 @@ let screenDetails = null;
 let gameWin = null;
 
 function loadConfig() {
-  try { return JSON.parse(localStorage.getItem('htm-config')) || {}; } catch(e) { return {}; }
+  try { return JSON.parse(sessionStorage.getItem('htm-config') || localStorage.getItem('htm-config')) || {}; } catch(e) { return {}; }
 }
 function saveConfig(cfg) {
-  localStorage.setItem('htm-config', JSON.stringify(cfg));
+  const json = JSON.stringify(cfg);
+  sessionStorage.setItem('htm-config', json);
+  localStorage.setItem('htm-config', json);
+  fetch('/config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: json }).catch(() => {});
+}
+async function fetchAndCacheConfig() {
+  try {
+    const r = await fetch('/config');
+    if (r.ok) {
+      const cfg = await r.json();
+      const json = JSON.stringify(cfg);
+      sessionStorage.setItem('htm-config', json);
+      localStorage.setItem('htm-config', json);
+      return cfg;
+    }
+  } catch(e) {}
+  return loadConfig();
 }
 
 function getScreens() {
@@ -266,12 +282,13 @@ function buildHints() {
   });
 }
 
-// Reload hints when config changes (storage event fires in other tabs)
+// Reload hints when config changes (storage event fires in same-browser tabs)
 window.addEventListener('storage', (e) => {
-  if (e.key === 'htm-config') { buildHints(); cmd('config-updated'); }
+  if (e.key === 'htm-config') buildHints();
 });
 
-buildHints();
+// Initial load — fetch from server so all devices share the same config
+fetchAndCacheConfig().then(() => buildHints());
 
 // Ask game for current state on load
 setTimeout(() => cmd('request-state'), 500);
