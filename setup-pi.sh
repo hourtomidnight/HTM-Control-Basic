@@ -92,16 +92,50 @@ else
   echo "    cd $INSTALL_DIR && node server.js"
 fi
 
+# ── nginx reverse proxy (port 80) ─────────────────────────────────────────────
+echo ""
+read -r -p "  Set up nginx on port 80 (access without :4000)? [Y/n] " INSTALL_NGINX
+if [[ ! "$INSTALL_NGINX" =~ ^[Nn]$ ]]; then
+  if ! command -v nginx &>/dev/null; then
+    echo "  Installing nginx..."
+    sudo apt-get install -y nginx
+  fi
+  echo "  Configuring nginx..."
+  sudo cp "$INSTALL_DIR/nginx-htm.conf" /etc/nginx/sites-available/htm-game-clock
+  sudo ln -sf /etc/nginx/sites-available/htm-game-clock /etc/nginx/sites-enabled/htm-game-clock
+  # Remove default site if it would conflict on port 80
+  if [ -L /etc/nginx/sites-enabled/default ]; then
+    sudo rm /etc/nginx/sites-enabled/default
+    echo "  (Removed nginx default site to free port 80)"
+  fi
+  sudo nginx -t && sudo systemctl enable nginx && sudo systemctl restart nginx
+  echo "  nginx configured — app is now on port 80."
+else
+  echo ""
+  echo "  Skipped nginx. App accessible on port 4000 only."
+fi
+
 # ── Print access URLs ─────────────────────────────────────────────────────────
 LOCAL_IP=$(hostname -I | awk '{print $1}')
-HOSTNAME=$(hostname)
+HNAME=$(hostname)
 echo ""
 echo "=================================================="
 echo "  Setup complete!"
 echo ""
+if [[ ! "$INSTALL_NGINX" =~ ^[Nn]$ ]]; then
+echo "  Home page (no port needed):"
+echo "    http://${HNAME}.local/"
+echo "    http://${LOCAL_IP}/"
+echo ""
+echo "  Direct links:"
+echo "    http://${HNAME}.local/operator.html"
+echo "    http://${HNAME}.local/game.html"
+echo "    http://${HNAME}.local/config.html"
+else
 echo "  Access from any device on your network:"
-echo "    http://${HOSTNAME}.local:4000/operator.html"
-echo "    http://${LOCAL_IP}:4000/operator.html"
+echo "    http://${HNAME}.local:4000/"
+echo "    http://${LOCAL_IP}:4000/"
+fi
 echo ""
 echo "  Game screen opens automatically from the operator."
 echo "=================================================="
