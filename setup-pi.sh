@@ -92,24 +92,58 @@ else
   echo "    cd $INSTALL_DIR && node server.js"
 fi
 
-# ── nginx reverse proxy (port 80) ─────────────────────────────────────────────
+# ── nginx integration ─────────────────────────────────────────────────────────
 echo ""
-read -r -p "  Set up nginx on port 80 (access without :4000)? [Y/n] " INSTALL_NGINX
+SNIPPET_DEST="/etc/nginx/snippets/htm-game-clock.conf"
+read -r -p "  Add /room-control to nginx (integrates with your existing site)? [Y/n] " INSTALL_NGINX
 if [[ ! "$INSTALL_NGINX" =~ ^[Nn]$ ]]; then
   if ! command -v nginx &>/dev/null; then
     echo "  Installing nginx..."
     sudo apt-get install -y nginx
   fi
-  echo "  Configuring nginx..."
-  sudo cp "$INSTALL_DIR/nginx-htm.conf" /etc/nginx/sites-available/htm-game-clock
-  sudo ln -sf /etc/nginx/sites-available/htm-game-clock /etc/nginx/sites-enabled/htm-game-clock
-  # Remove default site if it would conflict on port 80
-  if [ -L /etc/nginx/sites-enabled/default ]; then
-    sudo rm /etc/nginx/sites-enabled/default
-    echo "  (Removed nginx default site to free port 80)"
+
+  sudo mkdir -p /etc/nginx/snippets
+  sudo cp "$INSTALL_DIR/nginx-htm.conf" "$SNIPPET_DEST"
+  echo "  Snippet installed to $SNIPPET_DEST"
+  echo ""
+
+  # Find the active nginx server block file
+  NGINX_SITE=""
+  for f in /etc/nginx/sites-enabled/*; do
+    if sudo grep -q "listen 80" "$f" 2>/dev/null; then
+      NGINX_SITE="$f"
+      break
+    fi
+  done
+
+  if [ -n "$NGINX_SITE" ]; then
+    # Check if already included
+    if sudo grep -q "htm-game-clock" "$NGINX_SITE"; then
+      echo "  Snippet already included in $NGINX_SITE"
+    else
+      # Insert include before the closing brace of the first server block
+      sudo sed -i '/^}/{ /^}/!b; s|^}|    include /etc/nginx/snippets/htm-game-clock.conf;\n}|; :a; n; ba }' "$NGINX_SITE" 2>/dev/null || true
+      # Fallback: tell them to add it manually
+      if ! sudo grep -q "htm-game-clock" "$NGINX_SITE"; then
+        echo "  [!] Could not auto-insert — add this line inside your server {} block in:"
+        echo "      $NGINX_SITE"
+        echo ""
+        echo "      include /etc/nginx/snippets/htm-game-clock.conf;"
+        echo ""
+      else
+        echo "  Added include to $NGINX_SITE"
+      fi
+    fi
+  else
+    echo "  No existing nginx site found on port 80."
+    echo "  Add this line inside your server {} block:"
+    echo ""
+    echo "      include $SNIPPET_DEST;"
+    echo ""
   fi
-  sudo nginx -t && sudo systemctl enable nginx && sudo systemctl restart nginx
-  echo "  nginx configured — app is now on port 80."
+
+  sudo nginx -t && sudo systemctl reload nginx
+  echo "  nginx reloaded."
 else
   echo ""
   echo "  Skipped nginx. App accessible on port 4000 only."
@@ -123,14 +157,12 @@ echo "=================================================="
 echo "  Setup complete!"
 echo ""
 if [[ ! "$INSTALL_NGINX" =~ ^[Nn]$ ]]; then
-echo "  Home page (no port needed):"
-echo "    http://${HNAME}.local/"
-echo "    http://${LOCAL_IP}/"
+echo "  Room Control sub-page:"
+echo "    http://${HNAME}.local/room-control/"
+echo "    http://${LOCAL_IP}/room-control/"
 echo ""
-echo "  Direct links:"
-echo "    http://${HNAME}.local/operator.html"
-echo "    http://${HNAME}.local/game.html"
-echo "    http://${HNAME}.local/config.html"
+echo "  Add the card snippet to your home page:"
+echo "    cat $INSTALL_DIR/home-page-card.html"
 else
 echo "  Access from any device on your network:"
 echo "    http://${HNAME}.local:4000/"

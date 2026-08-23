@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>HTM Game Clock</title>
+  <title>Room Control / Timer (prototype)</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -126,6 +126,13 @@
     .card.config:hover { border-color: #7a6a10; }
 
     /* ── Footer ── */
+    .back-link {
+      position: fixed; top: 14px; left: 18px;
+      color: #445; font-size: 12px; text-decoration: none;
+      letter-spacing: 1px;
+    }
+    .back-link:hover { color: #7fb8ff; }
+
     footer {
       color: #333;
       font-size: 11px;
@@ -136,10 +143,12 @@
 </head>
 <body>
 
+<a class="back-link" href="/">← Home</a>
+
 <div class="hero">
   <span class="clock-icon">⏱</span>
-  <h1>HTM Game Clock</h1>
-  <p class="tagline">Escape Room Control System</p>
+  <h1>Room Control / Timer</h1>
+  <p class="tagline">Escape Room Control System &nbsp;·&nbsp; prototype</p>
 
   <div class="status-pill">
     <span class="dot" id="conn-dot"></span>
@@ -157,11 +166,11 @@
     <span class="card-arrow">→</span>
   </a>
 
-  <a class="card game" href="/game.html">
+  <a class="card game" href="/game.html" target="_blank">
     <span class="card-icon">📺</span>
     <div class="card-title">Game Screen</div>
-    <div class="card-desc">Full-screen display for players — timer, hints, and splash screens.</div>
-    <span class="card-arrow">→</span>
+    <div class="card-desc">Full-screen display for players. Usually opened automatically by the operator.</div>
+    <span class="card-arrow">↗</span>
   </a>
 
   <a class="card config" href="/config.html">
@@ -172,7 +181,7 @@
   </a>
 </div>
 
-<footer>HTM ESCAPE ROOM SYSTEM &nbsp;·&nbsp; http://hourtomidnight</footer>
+<footer>HTM ESCAPE ROOM SYSTEM &nbsp;·&nbsp; <a href="/" style="color:#334;text-decoration:none;">http://hourtomidnight</a></footer>
 
 <script>
   const dot       = document.getElementById('conn-dot');
