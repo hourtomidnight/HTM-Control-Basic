@@ -154,6 +154,35 @@
   </div>
 </div>
 
+<!-- Game Sheets -->
+<div class="card">
+  <h2>Game Sheets</h2>
+  <div class="field-row">
+    <label>Room name</label>
+    <input type="text" id="room-name" placeholder="e.g. Nibiru" />
+  </div>
+  <div class="field-row" style="margin-top:10px;padding-top:10px;border-top:1px solid #0f3460;">
+    <label>Sessions spreadsheet ID</label>
+    <input type="text" id="sessions-spreadsheet-id" placeholder="Google Sheet ID" />
+  </div>
+  <div class="field-row">
+    <label>Sessions tab name</label>
+    <input type="text" id="sessions-tab-name" placeholder="e.g. Sessions" />
+  </div>
+  <div class="field-row" style="margin-top:10px;padding-top:10px;border-top:1px solid #0f3460;">
+    <label>Hints spreadsheet ID</label>
+    <input type="text" id="hints-spreadsheet-id" placeholder="Google Sheet ID" />
+  </div>
+  <div class="field-row">
+    <label>Hints tab name</label>
+    <input type="text" id="hints-tab-name" placeholder="e.g. Nibiru-Hints" />
+  </div>
+  <div class="field-row">
+    <label>Hotkeys tab name</label>
+    <input type="text" id="hotkeys-tab-name" placeholder="e.g. Hotkeys" />
+  </div>
+</div>
+
 <!-- Logo -->
 <div class="card">
   <h2>Logo Image</h2>
@@ -437,6 +466,13 @@ function populateForm(cfg) {
   if (cfg.logoPath) { logoPreview.src = cfg.logoPath; logoPreview.style.display = 'block'; }
   else              { logoPreview.style.display = 'none'; }
 
+  document.getElementById('room-name').value = cfg.roomName || '';
+  document.getElementById('sessions-spreadsheet-id').value = cfg.sessionsSpreadsheetId || '';
+  document.getElementById('sessions-tab-name').value = cfg.sessionsTabName || '';
+  document.getElementById('hints-spreadsheet-id').value = cfg.hintsSpreadsheetId || '';
+  document.getElementById('hints-tab-name').value = cfg.hintsTabName || '';
+  document.getElementById('hotkeys-tab-name').value = cfg.hotkeysTabName || '';
+
   const key = cfg.startStopKey || '';
   startStopCapture.dataset.key = key;
   startStopCapture.textContent = key || 'click to assign';
@@ -457,6 +493,12 @@ document.getElementById('save-btn').addEventListener('click', async () => {
     logoPath:         logoPathEl.value.trim(),
     startStopKey:     startStopCapture.dataset.key || '',
     hintGroups:       readGroupsFromDOM(),
+    roomName:                document.getElementById('room-name').value.trim(),
+    sessionsSpreadsheetId:   document.getElementById('sessions-spreadsheet-id').value.trim(),
+    sessionsTabName:         document.getElementById('sessions-tab-name').value.trim(),
+    hintsSpreadsheetId:      document.getElementById('hints-spreadsheet-id').value.trim(),
+    hintsTabName:            document.getElementById('hints-tab-name').value.trim(),
+    hotkeysTabName:          document.getElementById('hotkeys-tab-name').value.trim(),
   };
   await saveConfig(saved);
   document.getElementById('status-msg').textContent = '✓ Saved!';
