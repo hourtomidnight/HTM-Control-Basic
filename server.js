@@ -12,7 +12,7 @@ const {
   createSession, applyAdjustment, applyHint, updateField, finalizeSession,
 } = require('./session-tracker');
 const {
-  createSheetsClient, appendRow, updateRow, buildSessionRow, buildHintRow,
+  createSheetsClient, appendRow, updateRow, buildSessionRow, buildHintRow, readColumn,
 } = require('./sheets');
 
 const CREDENTIALS_PATH = path.join(__dirname, 'google-credentials.json');
@@ -64,6 +64,12 @@ async function handleGameCommand(msg) {
         );
       } catch (e) { console.error('Sheets append (hint) failed:', e.message); }
     }
+    return;
+  }
+
+  if (msg.type === 'update-field') {
+    updateField(currentSession, msg.field, msg.value);
+    await syncSessionRow(cfg, sessionsReady);
     return;
   }
 
@@ -175,6 +181,26 @@ http.createServer(async (req, res) => {
     const json = JSON.stringify(cfg);
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(json);
+    return;
+  }
+
+  // ── GET /api/operators — return operator dropdown options ────────────────
+  if (url === '/api/operators' && req.method === 'GET') {
+    const cfg = loadConfig();
+    if (!sheetsAPI || !cfg.operatorsSpreadsheetId) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ operators: [] }));
+      return;
+    }
+    try {
+      const operators = await readColumn(sheetsAPI, cfg.operatorsSpreadsheetId, 'Drop Down options', 'B', 2);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ operators }));
+    } catch (e) {
+      console.error('Failed to read operators:', e.message);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ operators: [] }));
+    }
     return;
   }
 

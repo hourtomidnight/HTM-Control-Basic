@@ -12,6 +12,43 @@ function cmd(type, extra) {
   channel.postMessage(Object.assign({ type }, extra));
 }
 
+// ── Session info fields (debounced live-sync to Sheets) ────────────────────────
+let debounceTimers = {};
+function debouncedUpdateField(field, value) {
+  clearTimeout(debounceTimers[field]);
+  debounceTimers[field] = setTimeout(() => cmd('update-field', { field, value }), 5000);
+}
+
+document.getElementById('team-name-input').addEventListener('input', (e) => {
+  debouncedUpdateField('teamName', e.target.value);
+});
+document.getElementById('operator-select').addEventListener('change', (e) => {
+  cmd('update-field', { field: 'operator', value: e.target.value }); // immediate, not debounced — infrequent, deliberate action
+});
+document.getElementById('new-players-input').addEventListener('input', (e) => {
+  debouncedUpdateField('newPlayers', parseInt(e.target.value) || 0);
+});
+document.getElementById('experienced-players-input').addEventListener('input', (e) => {
+  debouncedUpdateField('experiencedPlayers', parseInt(e.target.value) || 0);
+});
+document.getElementById('notes-input').addEventListener('input', (e) => {
+  debouncedUpdateField('notes', e.target.value);
+});
+
+async function loadOperators() {
+  try {
+    const r = await fetch('/api/operators');
+    const { operators } = await r.json();
+    const select = document.getElementById('operator-select');
+    operators.forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name; opt.textContent = name;
+      select.appendChild(opt);
+    });
+  } catch (e) {}
+}
+loadOperators();
+
 // ── Timer buttons ─────────────────────────────────────────────────────────────
 document.getElementById('btn-start').addEventListener('click',     () => cmd('start'));
 pauseBtn.addEventListener('click', () => cmd(currentState.timerHasStopped ? 'resume' : 'pause'));

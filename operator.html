@@ -197,6 +197,32 @@
       width: 100%; padding: 6px; background: #1a2a3a; color: #7fb8ff;
       font-size: 11px; border-radius: 7px; margin-top: 4px;
     }
+
+    /* ── Session Info card ── */
+    .card {
+      background: #16213e;
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 4px;
+    }
+    .card h2 {
+      font-size: 11px; color: #a0c4ff; text-transform: uppercase;
+      letter-spacing: 2px; margin-bottom: 10px;
+      border-bottom: 1px solid #0f3460; padding-bottom: 6px;
+    }
+    .field-row {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+    }
+    .field-row label { width: 110px; color: #aaa; flex-shrink: 0; font-size: 11px; }
+    .field-row input[type="text"],
+    .field-row input[type="number"],
+    .field-row select,
+    .field-row textarea {
+      background: #0f3460; border: 1px solid #1a4a80;
+      color: #fff; border-radius: 6px; padding: 5px 9px; font-size: 12px;
+    }
+    .field-row input[type="text"],
+    .field-row select { flex: 1; }
   </style>
 </head>
 <body>
@@ -240,6 +266,30 @@
 
 <!-- Left controls -->
 <div id="ctrl-panel">
+  <div class="card" id="session-info-card">
+    <h2>Session Info</h2>
+    <div class="field-row">
+      <label>Team name</label>
+      <input type="text" id="team-name-input" placeholder="Team name" />
+    </div>
+    <div class="field-row">
+      <label>Operator</label>
+      <select id="operator-select"><option value="">— select —</option></select>
+    </div>
+    <div class="field-row">
+      <label>New players</label>
+      <input type="number" id="new-players-input" min="0" value="0" style="width:60px;" />
+    </div>
+    <div class="field-row">
+      <label>Experienced players</label>
+      <input type="number" id="experienced-players-input" min="0" value="0" style="width:60px;" />
+    </div>
+    <div class="field-row">
+      <label>Notes</label>
+      <textarea id="notes-input" rows="3" style="flex:1;background:#0f3460;border:1px solid #1a4a80;color:#fff;border-radius:6px;padding:5px 9px;"></textarea>
+    </div>
+  </div>
+
   <div class="ctrl-section">
     <h3>Volume</h3>
     <div class="vol-row">

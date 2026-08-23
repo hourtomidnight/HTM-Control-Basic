@@ -181,6 +181,10 @@
     <label>Hotkeys tab name</label>
     <input type="text" id="hotkeys-tab-name" placeholder="e.g. Hotkeys" />
   </div>
+  <div class="field-row" style="margin-top:10px;padding-top:10px;border-top:1px solid #0f3460;">
+    <label>Operators spreadsheet ID</label>
+    <input type="text" id="operators-spreadsheet-id" placeholder="Tracker's spreadsheet ID (Drop Down options tab)" />
+  </div>
 </div>
 
 <!-- Logo -->
@@ -472,6 +476,7 @@ function populateForm(cfg) {
   document.getElementById('hints-spreadsheet-id').value = cfg.hintsSpreadsheetId || '';
   document.getElementById('hints-tab-name').value = cfg.hintsTabName || '';
   document.getElementById('hotkeys-tab-name').value = cfg.hotkeysTabName || '';
+  document.getElementById('operators-spreadsheet-id').value = cfg.operatorsSpreadsheetId || '';
 
   const key = cfg.startStopKey || '';
   startStopCapture.dataset.key = key;
@@ -499,6 +504,7 @@ document.getElementById('save-btn').addEventListener('click', async () => {
     hintsSpreadsheetId:      document.getElementById('hints-spreadsheet-id').value.trim(),
     hintsTabName:            document.getElementById('hints-tab-name').value.trim(),
     hotkeysTabName:          document.getElementById('hotkeys-tab-name').value.trim(),
+    operatorsSpreadsheetId:  document.getElementById('operators-spreadsheet-id').value.trim(),
   };
   await saveConfig(saved);
   document.getElementById('status-msg').textContent = '✓ Saved!';
