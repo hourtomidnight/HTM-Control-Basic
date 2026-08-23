@@ -18,6 +18,9 @@ fi
 echo "[$(date)] Updating HTM Game Clock: $LOCAL → $REMOTE"
 git pull origin "$BRANCH"
 
+echo "[$(date)] Installing npm dependencies..."
+npm install --omit=dev
+
 if pm2 list | grep -q htm-game-clock; then
   pm2 restart htm-game-clock
 else

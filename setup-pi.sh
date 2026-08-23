@@ -47,11 +47,26 @@ fi
 echo ""
 echo "  Repository up to date."
 
+# ── Install dependencies ──────────────────────────────────────────────────────
+echo ""
+echo "  Installing npm dependencies..."
+cd "$INSTALL_DIR"
+npm install --omit=dev
+
 # ── Assets reminder ───────────────────────────────────────────────────────────
 echo ""
 echo "  Audio assets needed in: $INSTALL_DIR/assets/"
 echo "    TimerMusic.mp3   FinaleMusic.mp3   ClueSound.mp3"
 echo "  (App runs without them — audio commands are silent)"
+
+# ── Google Sheets credentials reminder ────────────────────────────────────────
+echo ""
+if [ ! -f "$INSTALL_DIR/google-credentials.json" ]; then
+  echo "  [!] No google-credentials.json found — Sheets logging is disabled until"
+  echo "      you copy a service-account key to:"
+  echo "        $INSTALL_DIR/google-credentials.json"
+  echo "      Then configure the spreadsheet IDs/tab names at http://<pi>/room-control/config.html"
+fi
 
 # ── pm2 service (auto-start, no sudo needed, matches GitHub Actions deploy) ───
 echo ""
