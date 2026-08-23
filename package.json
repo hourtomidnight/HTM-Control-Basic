@@ -5,7 +5,8 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder"
+    "build": "electron-builder",
+    "test": "node --test"
   },
   "build": {
     "appId": "com.htm.gameclock",
@@ -19,6 +20,9 @@
     "linux": {
       "target": "AppImage"
     }
+  },
+  "dependencies": {
+    "googleapis": "^144.0.0"
   },
   "devDependencies": {
     "electron": "^28.0.0",

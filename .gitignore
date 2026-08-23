@@ -1,6 +1,3 @@
 node_modules/
-dist/
-assets/*.mp3
-assets/*.png
-assets/*.jpg
-assets/*.jpeg
+google-credentials.json
+config.json
