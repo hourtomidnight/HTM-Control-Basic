@@ -41,6 +41,12 @@ function applyConfig() {
   if (timerHasStopped) resetTimer();
 }
 
+const VIDEO_EXTS = ['mp4', 'webm', 'ogv', 'mov'];
+function introMediaType(path) {
+  const ext = (path.split('.').pop() || '').toLowerCase().split('?')[0];
+  return VIDEO_EXTS.includes(ext) ? 'video' : 'audio';
+}
+
 window.addEventListener('storage', (e) => {
   if (e.key === 'htm-config') applyConfig();
 });
@@ -68,6 +74,8 @@ let musicPauseMs    = 0;
 let activeHints     = [];   // texts currently shown on screen
 let hintCycleIdx    = 0;
 let hintCycleTimer  = null;
+let introPlaying    = false;
+let introAudio      = null; // Audio() instance for the currently playing intro, if audio type
 
 // ── DOM ───────────────────────────────────────────────────────────────────────
 const splashEl     = document.getElementById('splash');
@@ -79,6 +87,8 @@ const clueBoxEl    = document.getElementById('clue-box');
 const clueCountEl  = document.getElementById('clue-counter');
 const volumeBarEl  = document.getElementById('volume-bar');
 const statusEl     = document.getElementById('status');
+const introOverlayEl = document.getElementById('intro-overlay');
+const introVideoEl   = document.getElementById('intro-video');
 
 // ── Audio ─────────────────────────────────────────────────────────────────────
 function makeAudio(file) {
@@ -129,6 +139,37 @@ function startGame() {
   playTimerMusic(); statusEl.textContent = 'RUNNING'; broadcastState();
 }
 
+function endIntro() {
+  if (!introPlaying) return;
+  introPlaying = false;
+  introOverlayEl.classList.remove('visible');
+  introVideoEl.pause(); introVideoEl.removeAttribute('src'); introVideoEl.load();
+  if (introAudio) { introAudio.pause(); introAudio = null; }
+  startGame();
+}
+
+function beginStartSequence() {
+  const path = (cfg.introMediaPath || '').trim();
+  if (!path) { startGame(); return; }
+
+  introPlaying = true;
+  statusEl.textContent = 'INTRO';
+  broadcastState();
+
+  if (introMediaType(path) === 'video') {
+    introOverlayEl.classList.add('visible');
+    introVideoEl.src = 'assets/' + path;
+    introVideoEl.currentTime = 0;
+    introVideoEl.onended = endIntro;
+    introVideoEl.play().catch(endIntro); // if playback fails, don't strand the operator
+  } else {
+    introAudio = makeAudio(path);
+    introAudio.onended = endIntro;
+    introAudio.volume = volume;
+    introAudio.play().catch(endIntro);
+  }
+}
+
 function pauseTimer() {
   if (timerHasStopped) return;
   stopTimerMusic(); stopFinaleMusic(); timerHasStopped = true;
@@ -159,6 +200,7 @@ function markEscaped() {
 // WAITING → START (running), RUNNING → STOP (locked), LOCKED → nothing
 function handleStartStop() {
   if (gameLocked) return;                          // locked — ignore
+  if (introPlaying) { endIntro(); return; }         // skip the intro straight to the timer
   if (onSplash && timerHasStopped) { channel.postMessage({ type: 'start' }); return; } // start
   if (!timerHasStopped) { channel.postMessage({ type: 'escaped' }); return; } // stop
   // if paused but not locked, also allow stop
@@ -166,6 +208,12 @@ function handleStartStop() {
 }
 
 function showWaitingSplash() {
+  if (introPlaying) {
+    introPlaying = false;
+    introOverlayEl.classList.remove('visible');
+    introVideoEl.pause(); introVideoEl.removeAttribute('src'); introVideoEl.load();
+    if (introAudio) { introAudio.pause(); introAudio = null; }
+  }
   stopTimerMusic(); stopFinaleMusic(); musicPauseMs = 0; onSplash = true;
   gameLocked = false; // reset clears the lock
   activeHints = []; hintCycleIdx = 0; stopHintCycle();
@@ -270,7 +318,7 @@ channel.addEventListener('message', (e) => {
   const c = e.data;
   if (!c || c.type === 'state') return;
   switch (c.type) {
-    case 'start':          if (!gameLocked) startGame(); break;
+    case 'start':          if (!gameLocked) beginStartSequence(); break;
     case 'pause':          pauseTimer(); break;
     case 'resume':         if (!gameLocked) resumeTimer(); break;
     case 'escaped':        markEscaped(); break;
