@@ -8,6 +8,81 @@ const PORT        = 4000;
 const ROOT        = __dirname;
 const CONFIG_FILE = path.join(__dirname, 'config.json');
 
+const {
+  createSession, applyAdjustment, applyHint, updateField, finalizeSession,
+} = require('./session-tracker');
+const {
+  createSheetsClient, appendRow, updateRow, buildSessionRow, buildHintRow,
+} = require('./sheets');
+
+const CREDENTIALS_PATH = path.join(__dirname, 'google-credentials.json');
+const sheetsAPI = createSheetsClient(CREDENTIALS_PATH);
+if (!sheetsAPI) console.warn('Google credentials not found. Sheets logging disabled.');
+
+let currentSession = null;
+let sessionRowIndex = null;
+
+const ADJUSTMENT_TYPES = new Set(['add-min', 'sub-min', 'add-sec', 'sub-sec']);
+
+async function handleGameCommand(msg) {
+  const cfg = loadConfig();
+  const sessionsReady = sheetsAPI && cfg.sessionsSpreadsheetId && cfg.sessionsTabName;
+  const hintsReady = sheetsAPI && cfg.hintsSpreadsheetId && cfg.hintsTabName;
+
+  if (msg.type === 'start' && !currentSession) {
+    currentSession = createSession({
+      startTime: Date.now(),
+      room: cfg.roomName || '',
+    });
+    sessionRowIndex = null;
+    if (sessionsReady) {
+      try {
+        const { rowIndex } = await appendRow(
+          sheetsAPI, cfg.sessionsSpreadsheetId, cfg.sessionsTabName, buildSessionRow(currentSession)
+        );
+        sessionRowIndex = rowIndex;
+      } catch (e) { console.error('Sheets append (session start) failed:', e.message); }
+    }
+    return;
+  }
+
+  if (!currentSession) return; // ignore events with no active session
+
+  if (ADJUSTMENT_TYPES.has(msg.type)) {
+    applyAdjustment(currentSession, msg.type, Date.now());
+    await syncSessionRow(cfg, sessionsReady);
+    return;
+  }
+
+  if (msg.type === 'show-hint') {
+    const hintRecord = applyHint(currentSession, msg.text || '', Date.now());
+    await syncSessionRow(cfg, sessionsReady);
+    if (hintsReady) {
+      try {
+        await appendRow(
+          sheetsAPI, cfg.hintsSpreadsheetId, cfg.hintsTabName, buildHintRow(hintRecord, currentSession)
+        );
+      } catch (e) { console.error('Sheets append (hint) failed:', e.message); }
+    }
+    return;
+  }
+
+  if (msg.type === 'escaped' || msg.type === 'reset') {
+    finalizeSession(currentSession, Date.now(), msg.type === 'escaped' ? 'Escaped' : 'Reset-Lost');
+    await syncSessionRow(cfg, sessionsReady);
+    currentSession = null;
+    sessionRowIndex = null;
+    return;
+  }
+}
+
+async function syncSessionRow(cfg, sessionsReady) {
+  if (!sessionsReady || sessionRowIndex == null) return;
+  try {
+    await updateRow(sheetsAPI, cfg.sessionsSpreadsheetId, cfg.sessionsTabName, sessionRowIndex, buildSessionRow(currentSession));
+  } catch (e) { console.error('Sheets update (session) failed:', e.message); }
+}
+
 const MIME = {
   '.html': 'text/html',
   '.js':   'text/javascript',
@@ -87,6 +162,7 @@ http.createServer(async (req, res) => {
       const msg  = JSON.parse(body);
       broadcast(msg);
       res.writeHead(204); res.end();
+      handleGameCommand(msg).catch(e => console.error('handleGameCommand error:', e.message));
     } catch(e) {
       res.writeHead(400); res.end('Bad JSON');
     }
