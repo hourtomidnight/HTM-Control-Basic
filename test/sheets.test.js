@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { formatDuration, formatNetAdjustment, buildSessionRow, buildHintRow } = require('../sheets');
+const { parseRowIndexFromUpdatedRange } = require('../sheets');
 
 test('formatDuration formats milliseconds as HH:MM:SS', () => {
   assert.equal(formatDuration(0), '00:00:00');
@@ -52,4 +53,9 @@ test('buildHintRow produces [Date, Time, Hint Text, Session Start Time]', () => 
   assert.equal(row.length, 4);
   assert.equal(row[2], 'Check the drawer');
   assert.equal(row[3], new Date(session.startTime).toLocaleTimeString());
+});
+
+test('parseRowIndexFromUpdatedRange extracts the row number from an A1 range', () => {
+  assert.equal(parseRowIndexFromUpdatedRange("'Sessions'!A15:N15"), 15);
+  assert.equal(parseRowIndexFromUpdatedRange("'Hints'!A2:D2"), 2);
 });
