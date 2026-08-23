@@ -21,6 +21,8 @@ if (!sheetsAPI) console.warn('Google credentials not found. Sheets logging disab
 
 let currentSession = null;
 let sessionRowIndex = null;
+let pendingFields = {};
+let gameLocked = false;
 
 const ADJUSTMENT_TYPES = new Set(['add-min', 'sub-min', 'add-sec', 'sub-sec']);
 
@@ -29,11 +31,12 @@ async function handleGameCommand(msg) {
   const sessionsReady = sheetsAPI && cfg.sessionsSpreadsheetId && cfg.sessionsTabName;
   const hintsReady = sheetsAPI && cfg.hintsSpreadsheetId && cfg.hintsTabName;
 
-  if (msg.type === 'start' && !currentSession) {
-    currentSession = createSession({
+  if (msg.type === 'start' && !currentSession && !gameLocked) {
+    currentSession = createSession(Object.assign({
       startTime: Date.now(),
       room: cfg.roomName || '',
-    });
+    }, pendingFields));
+    pendingFields = {};
     sessionRowIndex = null;
     if (sessionsReady) {
       try {
@@ -43,6 +46,18 @@ async function handleGameCommand(msg) {
         sessionRowIndex = rowIndex;
       } catch (e) { console.error('Sheets append (session start) failed:', e.message); }
     }
+    return;
+  }
+
+  if (msg.type === 'update-field' && !currentSession) {
+    if (['teamName', 'operator', 'newPlayers', 'experiencedPlayers', 'notes'].includes(msg.field)) {
+      pendingFields[msg.field] = msg.value;
+    }
+    return;
+  }
+
+  if (msg.type === 'reset' && !currentSession) {
+    gameLocked = false; // clear lock even if there's no session to finalize
     return;
   }
 
@@ -78,6 +93,7 @@ async function handleGameCommand(msg) {
     await syncSessionRow(cfg, sessionsReady);
     currentSession = null;
     sessionRowIndex = null;
+    gameLocked = (msg.type === 'escaped');
     return;
   }
 }

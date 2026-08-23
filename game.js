@@ -159,10 +159,10 @@ function markEscaped() {
 // WAITING → START (running), RUNNING → STOP (locked), LOCKED → nothing
 function handleStartStop() {
   if (gameLocked) return;                          // locked — ignore
-  if (onSplash && timerHasStopped) { startGame(); return; } // start
-  if (!timerHasStopped) { markEscaped(); return; } // stop
+  if (onSplash && timerHasStopped) { channel.postMessage({ type: 'start' }); return; } // start
+  if (!timerHasStopped) { channel.postMessage({ type: 'escaped' }); return; } // stop
   // if paused but not locked, also allow stop
-  if (timerHasStopped && !onSplash) { markEscaped(); }
+  if (timerHasStopped && !onSplash) { channel.postMessage({ type: 'escaped' }); }
 }
 
 function showWaitingSplash() {
@@ -305,7 +305,7 @@ document.addEventListener('keydown', (e) => {
   // Pause/Break = silent pause/resume only (no lock)
   if (k === 19)  { timerHasStopped ? resumeTimer() : pauseTimer(); return; }
   // Reset keys
-  if (k === 145 || k === 192) { showWaitingSplash(); return; }
+  if (k === 145 || k === 192) { channel.postMessage({ type: 'reset' }); return; }
   // Volume
   if (k === 107) { setVolume(volume + 0.01); broadcastState(); return; }
   if (k === 109) { setVolume(volume - 0.01); broadcastState(); return; }
@@ -313,7 +313,7 @@ document.addEventListener('keydown', (e) => {
   if (k === 111 || k === 96) { hideClue(); return; }
 
   // Configured hint keys
-  if (keyMap[keyStr]) { e.preventDefault(); showHint(keyMap[keyStr]); return; }
+  if (keyMap[keyStr]) { e.preventDefault(); channel.postMessage({ type: 'show-hint', text: keyMap[keyStr] }); return; }
 });
 
 document.addEventListener('click', handleStartStop);
