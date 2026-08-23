@@ -12,7 +12,7 @@ const {
   createSession, applyAdjustment, applyHint, updateField, finalizeSession,
 } = require('./session-tracker');
 const {
-  createSheetsClient, appendRow, updateRow, buildSessionRow, buildHintRow, readColumn,
+  createSheetsClient, appendRow, updateRow, buildSessionRow, buildHintRow, readColumn, buildHotkeysRows,
 } = require('./sheets');
 
 const CREDENTIALS_PATH = path.join(__dirname, 'google-credentials.json');
@@ -87,6 +87,24 @@ async function syncSessionRow(cfg, sessionsReady) {
   try {
     await updateRow(sheetsAPI, cfg.sessionsSpreadsheetId, cfg.sessionsTabName, sessionRowIndex, buildSessionRow(currentSession));
   } catch (e) { console.error('Sheets update (session) failed:', e.message); }
+}
+
+async function syncHotkeysTab(cfg) {
+  if (!sheetsAPI || !cfg.hintsSpreadsheetId || !cfg.hotkeysTabName) return;
+  const rows = buildHotkeysRows(cfg.hintGroups);
+  // Clear the tab's existing rows below the header, then append the current set.
+  await sheetsAPI.spreadsheets.values.clear({
+    spreadsheetId: cfg.hintsSpreadsheetId,
+    range: cfg.hotkeysTabName + '!A2:Z',
+  });
+  if (rows.length) {
+    await sheetsAPI.spreadsheets.values.update({
+      spreadsheetId: cfg.hintsSpreadsheetId,
+      range: cfg.hotkeysTabName + '!A2',
+      valueInputOption: 'USER_ENTERED',
+      requestBody: { values: rows },
+    });
+  }
 }
 
 const MIME = {
@@ -212,6 +230,7 @@ http.createServer(async (req, res) => {
       saveConfig(cfg);
       broadcast({ type: 'config-updated' });
       res.writeHead(204); res.end();
+      syncHotkeysTab(cfg).catch(e => console.error('Hotkeys tab sync failed:', e.message));
     } catch(e) {
       res.writeHead(400); res.end('Bad JSON');
     }

@@ -59,3 +59,18 @@ test('parseRowIndexFromUpdatedRange extracts the row number from an A1 range', (
   assert.equal(parseRowIndexFromUpdatedRange("'Sessions'!A15:N15"), 15);
   assert.equal(parseRowIndexFromUpdatedRange("'Hints'!A2:D2"), 2);
 });
+
+const { buildHotkeysRows } = require('../sheets');
+
+test('buildHotkeysRows flattens hint groups into [Group, Key, Hint Text] rows', () => {
+  const hintGroups = [
+    { name: 'Kitchen', hints: [{ text: 'Check the oven', key: 'F1' }, { text: 'Look under the sink', key: 'F2' }] },
+    { name: 'Study', hints: [{ text: 'Try the bookshelf', key: 'F3' }] },
+  ];
+  const rows = buildHotkeysRows(hintGroups);
+  assert.deepEqual(rows, [
+    ['Kitchen', 'F1', 'Check the oven'],
+    ['Kitchen', 'F2', 'Look under the sink'],
+    ['Study', 'F3', 'Try the bookshelf'],
+  ]);
+});

@@ -103,7 +103,18 @@ function buildHintRow(hintRecord, session) {
   ];
 }
 
+function buildHotkeysRows(hintGroups) {
+  const rows = [];
+  (hintGroups || []).forEach(group => {
+    (group.hints || []).forEach(hint => {
+      rows.push([group.name || '', hint.key || '', hint.text || '']);
+    });
+  });
+  return rows;
+}
+
 module.exports = {
   formatDuration, formatNetAdjustment, buildSessionRow, buildHintRow,
   createSheetsClient, parseRowIndexFromUpdatedRange, appendRow, updateRow, readColumn,
+  buildHotkeysRows,
 };
