@@ -1,0 +1,50 @@
+name: Deploy to Pi
+
+on:
+  push:
+    branches:
+      - claude/modern-pc-app-conversion-pgpyy2
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+          # Ephemeral node — disappears from Tailscale admin after the run
+          args: --ephemeral
+
+      - name: Deploy to Raspberry Pi
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 100.109.138.91
+          username: elshoff
+          key: ${{ secrets.PI_SSH_KEY }}
+          script: |
+            set -e
+            REPO_DIR="$HOME/HTM-Control-Basic"
+            BRANCH="claude/modern-pc-app-conversion-pgpyy2"
+
+            # Clone if not present
+            if [ ! -d "$REPO_DIR/.git" ]; then
+              echo "Cloning repository..."
+              git clone --branch "$BRANCH" https://github.com/hourtomidnight/HTM-Control-Basic.git "$REPO_DIR"
+            fi
+
+            cd "$REPO_DIR"
+            git fetch origin "$BRANCH"
+            git checkout "$BRANCH"
+            git pull origin "$BRANCH"
+
+            # Restart via pm2 (already installed for GameTracker, no sudo needed)
+            if pm2 list | grep -q htm-game-clock; then
+              pm2 restart htm-game-clock
+            else
+              pm2 start server.js --name htm-game-clock
+              pm2 save
+            fi
+
+            echo "✓ HTM Game Clock deployed at $(date)"

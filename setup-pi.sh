@@ -53,44 +53,32 @@ echo "  Audio assets needed in: $INSTALL_DIR/assets/"
 echo "    TimerMusic.mp3   FinaleMusic.mp3   ClueSound.mp3"
 echo "  (App runs without them — audio commands are silent)"
 
-# ── Systemd service (optional) ────────────────────────────────────────────────
+# ── pm2 service (auto-start, no sudo needed, matches GitHub Actions deploy) ───
 echo ""
-read -r -p "  Install as a systemd service (auto-start on boot)? [y/N] " INSTALL_SERVICE
-if [[ "$INSTALL_SERVICE" =~ ^[Yy]$ ]]; then
-  SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
-  sudo tee "$SERVICE_FILE" > /dev/null <<EOF
-[Unit]
-Description=HTM Game Clock
-After=network.target
-
-[Service]
-Type=simple
-User=$USER
-WorkingDirectory=$INSTALL_DIR
-ExecStart=$(command -v node) $INSTALL_DIR/server.js
-Restart=on-failure
-RestartSec=5
-StandardOutput=journal
-StandardError=journal
-
-[Install]
-WantedBy=multi-user.target
-EOF
-  sudo systemctl daemon-reload
-  sudo systemctl enable "$SERVICE_NAME"
-  sudo systemctl restart "$SERVICE_NAME"
-  echo ""
-  echo "  Service installed and started."
-  echo "  Manage with:"
-  echo "    sudo systemctl start   $SERVICE_NAME"
-  echo "    sudo systemctl stop    $SERVICE_NAME"
-  echo "    sudo systemctl restart $SERVICE_NAME"
-  echo "    sudo journalctl -u     $SERVICE_NAME -f"
-else
-  echo ""
-  echo "  Skipped service install. Start manually with:"
-  echo "    cd $INSTALL_DIR && node server.js"
+if ! command -v pm2 &>/dev/null; then
+  echo "  Installing pm2..."
+  npm install -g pm2
 fi
+
+cd "$INSTALL_DIR"
+if pm2 list | grep -q "$SERVICE_NAME"; then
+  pm2 restart "$SERVICE_NAME"
+  echo "  pm2 service restarted."
+else
+  pm2 start server.js --name "$SERVICE_NAME"
+  pm2 save
+  echo "  pm2 service started and saved."
+fi
+
+# Make pm2 survive reboots
+pm2 startup | tail -1 | bash 2>/dev/null || \
+  echo "  [!] Run 'pm2 startup' manually and follow its instructions to survive reboots."
+
+echo ""
+echo "  Manage with:"
+echo "    pm2 status"
+echo "    pm2 restart $SERVICE_NAME"
+echo "    pm2 logs    $SERVICE_NAME"
 
 # ── nginx integration ─────────────────────────────────────────────────────────
 echo ""
